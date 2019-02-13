@@ -150,9 +150,8 @@ Buffer::char_at(Index index) const {
         chars_passed += node->obj.len;
         node = node->next;
     }
-    if (node) {
-        return node->obj.start[index - chars_passed];
-    }
+    assert(node);
+    return node->obj.start[index - chars_passed];
 }
 
 usize

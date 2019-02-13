@@ -20,8 +20,8 @@ struct Buffer {
         char
         get_char() const;
 
-        // Updates the cursor to reference the next char and puts it
-        // in CH.  Returns true if there was a next char.
+        // Updates the cursor to reference the next char.
+        // Returns true if there was a next char.
         bool
         next_char();
 

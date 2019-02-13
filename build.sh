@@ -16,17 +16,18 @@ while [ $# -gt 0 ]; do
 done
 
 [ -z "$CXX" ] && CXX=c++
+CXXFLAGS="-Wall -Wextra $CXXFLAGS"
 LDFLAGS="-lncurses $LDFLAGS"
 
 if [ $debug ]; then
-    CXXFLAGS="-Wall -Wextra -g $CXXFLAGS"
+    CXXFLAGS="-g $CXXFLAGS"
 else
     CXXFLAGS="-O2 $CXXFLAGS"
 fi
 
 if [ ! $nogui ]; then
-    CXXFLAGS="-I/usr/include/freetype2 -DHAVE_X11 $CXXFLAGS"
-    LDFLAGS="-lX11 -lfreetype -lxft $LDFLAGS"
+    CXXFLAGS="`pkg-config --cflags xft` -DHAVE_X11 $CXXFLAGS"
+    LDFLAGS="`pkg-config --libs x11` `pkg-config --libs xft` $LDFLAGS"
 fi
 
 cmd="$CXX $CXXFLAGS all.cpp $LDFLAGS -o e"

@@ -21,13 +21,16 @@ static_assert (sizeof (i64) == 8);
 static_assert (sizeof (usize) == sizeof (void*));
 static_assert (sizeof (isize) == sizeof (void*));
 
-#define null 0
+#define null nullptr
 
 #define MAX(a, b)  \
     ((a) > (b) ? (a) : (b))
 
 #define STR_(s) #s
 #define STR(s) STR_(s)
+
+#define ERROR(msg)  \
+    os_write_err(msg " (" __FILE__ ":" STR(__LINE__) ")\n")
 
 void
 os_abort();
@@ -43,3 +46,15 @@ os_write_err(const char* str);
             os_abort();  \
         }  \
     } while (0)
+
+struct [[nodiscard]] Result {
+    bool is_ok;
+
+    Result(bool ok)
+        : is_ok(ok)
+    {}
+
+    operator bool() const {
+        return is_ok;
+    }
+};

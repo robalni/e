@@ -66,6 +66,7 @@ test_main(int, char**) {
     test(list_remove);
     test(buffer_insert_iterate);
     test(buffer_remove);
+    test(view);
 
     print_summary(n_failed);
     return n_failed;
