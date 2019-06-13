@@ -3,6 +3,22 @@
 #include "common.hpp"
 
 
+enum Key {
+    UNKNOWN,
+    UP,
+    RIGHT,
+    LEFT,
+    DOWN,
+    HOME,
+    END,
+    RETURN,
+    BACKSPACE,
+    DEL,
+    ESCAPE,
+    PAGEDOWN,
+    PAGEUP,
+};
+
 Result
 init_gui();
 
@@ -13,6 +29,7 @@ struct Event {
         KEYDOWN,
     };
     Type type;
+    int keysym;
 };
 
 Event
