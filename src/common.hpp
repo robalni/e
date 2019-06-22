@@ -1,25 +1,18 @@
 #pragma once
 
-using u8 = unsigned char;
-using i8 = signed char;
-using u16 = unsigned short;
-using i16 = short;
-using u32 = unsigned;
-using i32 = int;
-using u64 = unsigned long;
-using i64 = long;
-using usize = unsigned long;
-using isize = long;
-static_assert (sizeof (u8) == 1);
-static_assert (sizeof (i8) == 1);
-static_assert (sizeof (u16) == 2);
-static_assert (sizeof (i16) == 2);
-static_assert (sizeof (u32) == 4);
-static_assert (sizeof (i32) == 4);
-static_assert (sizeof (u64) == 8);
-static_assert (sizeof (i64) == 8);
-static_assert (sizeof (usize) == sizeof (void*));
-static_assert (sizeof (isize) == sizeof (void*));
+#include <stdint.h>
+#include <stdlib.h>
+
+using u8 = uint8_t;
+using i8 = int8_t;
+using u16 = uint16_t;
+using i16 = int16_t;
+using u32 = uint32_t;
+using i32 = int32_t;
+using u64 = uint64_t;
+using i64 = int64_t;
+using usize = size_t;
+using isize = ssize_t;
 
 #define null nullptr
 
