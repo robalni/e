@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "view.hpp"
 
 
 Result
@@ -11,9 +12,13 @@ struct Event {
         UNKNOWN,
         QUIT,
         KEYDOWN,
+        RENDER,
     };
     Type type;
 };
 
 Event
 read_input();
+
+void
+render_everything(const View& bv);
