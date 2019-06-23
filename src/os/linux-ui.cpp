@@ -32,7 +32,7 @@ init_gui() {
     win = XCreateWindow(disp, root, 0, 0, 80*10, 25*20, 0,
                         24, InputOutput, vis, 0, NULL);
 
-    int events = ExposureMask | StructureNotifyMask;
+    int events = ExposureMask | StructureNotifyMask | KeyPressMask;
     XSelectInput(disp, win, events);
 
     // Make it possible to receive window close events.
@@ -98,11 +98,8 @@ render_everything(const View& bv) {
     int start_col = 0;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
-    for (;;) {
+    for (; cur.has_char(); cur.next_char()) {
         char c = cur.get_char();
-        if (!cur.next_char()) {
-            break;
-        }
         if (line_start) {
             char nr[11] = {0};
             snprintf(nr, 10, "% 4d ", line);
@@ -128,6 +125,8 @@ render_everything(const View& bv) {
         col++;
         line_start = false;
     }
+
+    XCopyArea(disp, win_buf, win, gc, 0, 0, win_w, win_h, 0, 0);
 }
 
 Event
@@ -136,6 +135,13 @@ read_input() {
     for (;;) {
         XNextEvent(disp, &event);
         switch (event.type) {
+        case KeyPress: {
+            KeySym sym = XLookupKeysym(&event.xkey, event.xkey.state & 7);
+            Event e;
+            e.type = Event::KEYDOWN | Event::CHAR;
+            e.keysym = sym;
+            return e;
+        } break;
         case ConfigureNotify: {
             XConfigureEvent ce = event.xconfigure;
             if (ce.width != win_w || ce.height != win_h) {
@@ -146,7 +152,9 @@ read_input() {
                 win_h = ce.height;
                 win_buf = XCreatePixmap(disp, win, win_w, win_h, 24);
                 draw = XftDrawCreate(disp, win_buf, vis, colormap);
-                return {Event::RENDER};
+                Event e;
+                e.type = Event::RENDER;
+                return e;
             }
         } break;
         case Expose: {
@@ -158,11 +166,12 @@ read_input() {
         case ClientMessage: {
             Atom received_atom = static_cast<Atom>(event.xclient.data.l[0]);
             if (received_atom == delete_window_message) {
-                return {Event::QUIT};
+                Event e;
+                e.type = Event::QUIT;
+                return e;
             }
         } break;
         }
     }
-    // Should never happen.
     return {Event::UNKNOWN};
 }

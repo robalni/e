@@ -18,9 +18,14 @@ editor_main(int, char**) {
     // Main loop
     for (;;) {
         Event ev = read_input();
-        if (ev.type == Event::QUIT) {
+        if (ev.type & Event::CHAR) {
+            buf.insert_char(ev.keysym, buf.len());
+            render_everything(bv);  // TODO: Don't need to.
+        }
+        if (ev.type & Event::QUIT) {
             break;
-        } else if (ev.type == Event::RENDER) {
+        }
+        if (ev.type & Event::RENDER) {
             render_everything(bv);
         }
     }

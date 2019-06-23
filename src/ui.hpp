@@ -25,12 +25,13 @@ init_gui();
 
 struct Event {
     enum Type {
-        UNKNOWN,
-        QUIT,
-        KEYDOWN,
-        RENDER,
+        UNKNOWN = 0,
+        CHAR = 1,
+        KEYDOWN = 2,
+        QUIT = 4,
+        RENDER = 8,
     };
-    Type type;
+    int type;
     int keysym;
 };
 

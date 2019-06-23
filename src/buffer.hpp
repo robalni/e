@@ -20,6 +20,10 @@ struct Buffer {
         char
         get_char() const;
 
+        // Returns true if there is a char at the current position.
+        bool
+        has_char() const;
+
         // Updates the cursor to reference the next char.
         // Returns true if there was a next char.
         bool

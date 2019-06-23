@@ -186,30 +186,26 @@ Buffer::TmpCursor::get_char() const {
 }
 
 bool
+Buffer::TmpCursor::has_char() const {
+    return this->segment && this->segment->obj.len > this->index;
+}
+
+bool
 Buffer::TmpCursor::next_char() {
     this->index++;
     if (this->index >= this->segment->obj.len) {
-        if (this->segment->next != null) {
-            this->segment = this->segment->next;
-            this->index = 0;
-        } else {
-            this->index--;
-            return false;
-        }
+        this->segment = this->segment->next;
+        this->index = 0;
     }
-    return true;
+    return this->segment != null;
 }
 
 bool
 Buffer::TmpCursor::prev_char() {
     if (this->index == 0) {
-        if (this->segment->prev != null) {
-            this->segment = this->segment->prev;
-            this->index = this->segment->obj.len;
-        } else {
-            return false;
-        }
+        this->segment = this->segment->prev;
+        this->index = this->segment->obj.len;
     }
     this->index--;
-    return true;
+    return this->segment != null;
 }
