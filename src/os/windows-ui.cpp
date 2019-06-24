@@ -99,7 +99,7 @@ read_input() {
             DispatchMessage(&msg);
             switch (msg.message) {
             case WM_CHAR:
-                return {Event::KEYDOWN, msg.wParam};
+                return {Event::CHAR, msg.wParam};
             case WM_KEYDOWN:
                 if (to_key(msg.wParam) != msg.wParam) {
                     return {Event::KEYDOWN, to_key(msg.wParam)};
