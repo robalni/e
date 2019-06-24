@@ -6,8 +6,8 @@ init_gui() {
     return true;
 }
 
-static void
-render_everything() {
+void
+render_everything(const View& bv) {
 }
 
 Event
