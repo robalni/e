@@ -41,15 +41,15 @@ struct Color {
     u8 r, g, b;
 };
 
-static Color bg = {0x22, 0x22, 0x22};
-static Color fg = {0xff, 0xff, 0xff};
-static Color soft = {0x99, 0x99, 0x99};
-static u8 fontw = 10;
-static u8 fonth = 20;
-static HDC hdc;
-static HBRUSH brush;
-static HPEN pen;
-static HFONT font;
+Color bg = {0x22, 0x22, 0x22};
+Color fg = {0xff, 0xff, 0xff};
+Color soft = {0x99, 0x99, 0x99};
+u8 fontw = 10;
+u8 fonth = 20;
+HDC hdc;
+HBRUSH brush;
+HPEN pen;
+HFONT font;
 
 static int to_key(int k) {
     switch (k) {
