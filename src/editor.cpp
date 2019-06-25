@@ -15,11 +15,25 @@ editor_main(int, char**) {
     buf.insert_char('\n', 3);
     View bv = View::new_into_buffer(&buf);
 
+    Buffer::TmpCursor& cur = bv.cursor;
+
     // Main loop
     for (;;) {
         Event ev = read_input();
         if (ev.type & Event::CHAR) {
             buf.insert_char(ev.keysym, buf.len());
+            render_everything(bv);  // TODO: Don't need to.
+        }
+        if (ev.type & Event::KEYDOWN) {
+            Buffer::TmpCursor orig_cur = cur;
+            switch (ev.keysym) {
+            case Key::RIGHT:
+                cur.next_char();
+                break;
+            }
+            if (!cur.has_char()) {
+                cur = orig_cur;
+            }
             render_everything(bv);  // TODO: Don't need to.
         }
         if (ev.type & Event::QUIT) {

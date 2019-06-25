@@ -14,9 +14,13 @@ struct View {
     cursor_at_start() const;
 
     Buffer* buffer;
+
     // How far into the buffer does this view begin?  If it's 48 that
     // means we have scrolled down 48 lines.
     u32 offset_y;
+
+    // The cursor that determines where text will be inserted.
+    Buffer::TmpCursor cursor;
 
     View() = delete;
 };

@@ -180,6 +180,14 @@ Buffer::index_to_cursor(Index index) const {
     return {node, index - len_sum};
 }
 
+Buffer::TmpCursor
+Buffer::cursor_at_start() const {
+    return {
+        this->data.segments.first,
+        0,
+    };
+}
+
 char
 Buffer::TmpCursor::get_char() const {
     return this->segment->obj.start[this->index];
@@ -208,4 +216,10 @@ Buffer::TmpCursor::prev_char() {
     }
     this->index--;
     return this->segment != null;
+}
+
+bool
+Buffer::TmpCursor::operator==(const TmpCursor& other) const {
+    return this->segment == other.segment
+        && this->index == other.index;
 }

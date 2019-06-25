@@ -91,11 +91,11 @@ render_everything(const View& bv) {
     draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
 
     Buffer::TmpCursor cur = bv.cursor_at_start();
+    int start_col = 0;
     int row = 0;
-    int col = 0;
+    int col = start_col;
     int line = 1;
     bool line_start = true;
-    int start_col = 0;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
     for (; cur.has_char(); cur.next_char()) {
@@ -110,9 +110,9 @@ render_everything(const View& bv) {
             }
             XSetForeground(disp, gc, fg);
         }
-        //if (buffer.cursor.pos == i) {
-        //    draw_vline(gc, col, row, 1, soft);
-        //}
+        if (bv.cursor == cur) {
+            draw_vline(gc, col, row, 1, soft);
+        }
         if (c == '\n') {
             row++;
             line++;
@@ -138,7 +138,10 @@ read_input() {
         case KeyPress: {
             KeySym sym = XLookupKeysym(&event.xkey, event.xkey.state & 7);
             Event e;
-            e.type = Event::KEYDOWN | Event::CHAR;
+            e.type = Event::KEYDOWN;
+            if (key_is_printable(sym)) {
+                e.type |= Event::CHAR;
+            }
             e.keysym = sym;
             return e;
         } break;

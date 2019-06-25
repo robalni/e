@@ -32,6 +32,11 @@ struct Buffer {
         // Same as next_char but backwards.
         bool
         prev_char();
+
+        // Two TmpCursor are equal if they point to the same segment
+        // and have the same index.
+        bool
+        operator==(const TmpCursor& other) const;
     };
 
     static Buffer
@@ -52,6 +57,10 @@ struct Buffer {
 
     TmpCursor
     index_to_cursor(Index index) const;
+
+    // Returns cursor pointing to the first character in this buffer.
+    TmpCursor
+    cursor_at_start() const;
 
 
     // Internal

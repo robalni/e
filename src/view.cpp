@@ -6,6 +6,7 @@ View::new_into_buffer(Buffer* b) {
     return View {
         b,
         0,
+        b->cursor_at_start(),
     };
 }
 
