@@ -129,6 +129,38 @@ render_everything(const View& bv) {
     XCopyArea(disp, win_buf, win, gc, 0, 0, win_w, win_h, 0, 0);
 }
 
+static int
+to_key_x(int k) {
+    switch (k) {
+    case XK_Up:
+        return Key::UP;
+    case XK_Left:
+        return Key::LEFT;
+    case XK_Right:
+        return Key::RIGHT;
+    case XK_Down:
+        return Key::DOWN;
+    case XK_Home:
+        return Key::HOME;
+    case XK_End:
+        return Key::END;
+    case XK_Return:
+        return Key::RETURN;
+    case XK_BackSpace:
+        return Key::BACKSPACE;
+    case XK_Delete:
+        return Key::DEL;
+    case XK_Escape:
+        return Key::ESCAPE;
+    case XK_Page_Down:
+        return Key::PAGEDOWN;
+    case XK_Page_Up:
+        return Key::PAGEUP;
+    default:
+        return k;
+    }
+}
+
 Event
 read_input() {
     XEvent event;
@@ -142,7 +174,7 @@ read_input() {
             if (key_is_printable(sym)) {
                 e.type |= Event::CHAR;
             }
-            e.keysym = sym;
+            e.keysym = to_key_x(sym);
             return e;
         } break;
         case ConfigureNotify: {

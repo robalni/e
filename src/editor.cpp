@@ -30,6 +30,9 @@ editor_main(int, char**) {
             case Key::RIGHT:
                 cur.next_char();
                 break;
+            case Key::LEFT:
+                cur.prev_char();
+                break;
             }
             if (!cur.has_char()) {
                 cur = orig_cur;

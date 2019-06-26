@@ -212,7 +212,9 @@ bool
 Buffer::TmpCursor::prev_char() {
     if (this->index == 0) {
         this->segment = this->segment->prev;
-        this->index = this->segment->obj.len;
+        if (this->segment) {
+            this->index = this->segment->obj.len;
+        }
     }
     this->index--;
     return this->segment != null;
