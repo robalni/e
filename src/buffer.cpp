@@ -190,6 +190,7 @@ Buffer::cursor_at_start() const {
 
 char
 Buffer::TmpCursor::get_char() const {
+    assert(this->index < this->segment->obj.len);
     return this->segment->obj.start[this->index];
 }
 
