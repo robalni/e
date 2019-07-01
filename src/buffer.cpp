@@ -236,7 +236,8 @@ Buffer::TmpCursor::prev_char() {
     } else {
         if (this->segment->prev) {
             this->segment = this->segment->prev;
-            this->index = this->segment->obj.len;
+            this->index = this->segment->obj.len - 1;
+            this->full_backup_index--;
         }
     }
 }
