@@ -198,26 +198,31 @@ Buffer::TmpCursor::has_char() const {
     return this->segment && this->segment->obj.len > this->index;
 }
 
-bool
+void
 Buffer::TmpCursor::next_char() {
     this->index++;
+    // If this is last segment (segment->next is null) then we should
+    // go out of bounds to mark that we reached EOF.
     if (this->index >= this->segment->obj.len) {
-        this->segment = this->segment->next;
-        this->index = 0;
-    }
-    return this->segment != null;
-}
-
-bool
-Buffer::TmpCursor::prev_char() {
-    if (this->index == 0) {
-        this->segment = this->segment->prev;
-        if (this->segment) {
+        if (this->segment->next) {
+            this->segment = this->segment->next;
+            this->index = 0;
+        } else {
             this->index = this->segment->obj.len;
         }
     }
-    this->index--;
-    return this->segment != null;
+}
+
+void
+Buffer::TmpCursor::prev_char() {
+    if (this->index > 0) {
+        this->index--;
+    } else {
+        if (this->segment->prev) {
+            this->segment = this->segment->prev;
+            this->index = this->segment->obj.len;
+        }
+    }
 }
 
 bool

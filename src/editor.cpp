@@ -25,7 +25,6 @@ editor_main(int, char**) {
             render_everything(bv);  // TODO: Don't need to.
         }
         if (ev.type & Event::KEYDOWN) {
-            Buffer::TmpCursor orig_cur = cur;
             switch (ev.keysym) {
             case Key::RIGHT:
                 cur.next_char();
@@ -33,9 +32,6 @@ editor_main(int, char**) {
             case Key::LEFT:
                 cur.prev_char();
                 break;
-            }
-            if (!cur.has_char()) {
-                cur = orig_cur;
             }
             render_everything(bv);  // TODO: Don't need to.
         }

@@ -93,7 +93,8 @@ render_everything(const View& bv) {
     Buffer::TmpCursor cur = bv.cursor_at_start();
     int start_col = 0;
     int row = 0;
-    int col = start_col;
+    int linenr_width = 5;
+    int col = start_col + linenr_width;
     int line = 1;
     bool line_start = true;
     XRenderColor xcolor_soft = xcolor(soft);
@@ -103,6 +104,7 @@ render_everything(const View& bv) {
         if (line_start) {
             char nr[11] = {0};
             snprintf(nr, 10, "% 4d ", line);
+            col -= linenr_width;
             for (size_t j = 0; j < 5; j++) {
                 draw_char(nr[j], gc, col, row, xcolor_soft);
                 col++;
@@ -116,7 +118,7 @@ render_everything(const View& bv) {
         if (c == '\n') {
             row++;
             line++;
-            col = start_col;
+            col = start_col + linenr_width;
             draw_rect(gc, start_col, row, 80, 1, bg);
             line_start = true;
             continue;
@@ -124,6 +126,9 @@ render_everything(const View& bv) {
         draw_char(c, gc, col, row, xcolor_fg);
         col++;
         line_start = false;
+    }
+    if (cur == bv.cursor) {
+        draw_vline(gc, col, row, 1, soft);
     }
 
     XCopyArea(disp, win_buf, win, gc, 0, 0, win_w, win_h, 0, 0);

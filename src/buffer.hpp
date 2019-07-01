@@ -25,12 +25,11 @@ struct Buffer {
         has_char() const;
 
         // Updates the cursor to reference the next char.
-        // Returns true if there was a next char.
-        bool
+        void
         next_char();
 
         // Same as next_char but backwards.
-        bool
+        void
         prev_char();
 
         // Two TmpCursor are equal if they point to the same segment
