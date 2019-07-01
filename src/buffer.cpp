@@ -60,6 +60,7 @@ Buffer::new_empty(MemoryManager&& mem) {
             List<DataSegment>::new_empty(),
             null,
         },
+        0,
     };
 }
 
@@ -97,6 +98,7 @@ Buffer::insert_char(char ch, Index index) {
             = insert_char_in_segment(*this, ch, where.segment, where.index);
         to_write = new_node->obj.start;
         latest_seg = &new_node->obj;
+        this->cursor_revision++;
     }
 
     // Write the character.
@@ -108,6 +110,7 @@ Buffer::insert_char(char ch, Index index) {
 void
 Buffer::remove_range(TmpCursor first, TmpCursor last) {
     using SegNode = List<DataSegment>::Node;
+    this->cursor_revision++;
     SegNode* node = first.segment;
     // Look at each node and remove it or change the size of it.
     for (;;) {
@@ -177,7 +180,7 @@ Buffer::index_to_cursor(Index index) const {
         node = node->next;
     }
 
-    return {node, index - len_sum};
+    return {node, index - len_sum, this->cursor_revision, index};
 }
 
 Buffer::TmpCursor
@@ -185,7 +188,16 @@ Buffer::cursor_at_start() const {
     return {
         this->data.segments.first,
         0,
+        this->cursor_revision,
+        0,
     };
+}
+
+void
+Buffer::renew_cursor(TmpCursor& cur) const {
+    if (cur.revision != this->cursor_revision) {
+        cur = this->index_to_cursor(cur.full_backup_index);
+    }
 }
 
 char
@@ -202,6 +214,7 @@ Buffer::TmpCursor::has_char() const {
 void
 Buffer::TmpCursor::next_char() {
     this->index++;
+    this->full_backup_index++;
     // If this is last segment (segment->next is null) then we should
     // go out of bounds to mark that we reached EOF.
     if (this->index >= this->segment->obj.len) {
@@ -210,6 +223,7 @@ Buffer::TmpCursor::next_char() {
             this->index = 0;
         } else {
             this->index = this->segment->obj.len;
+            this->full_backup_index--;
         }
     }
 }
@@ -218,6 +232,7 @@ void
 Buffer::TmpCursor::prev_char() {
     if (this->index > 0) {
         this->index--;
+        this->full_backup_index--;
     } else {
         if (this->segment->prev) {
             this->segment = this->segment->prev;

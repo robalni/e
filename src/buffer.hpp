@@ -16,6 +16,8 @@ struct Buffer {
     struct TmpCursor {
         List<DataSegment>::Node* segment;
         Index index;  // Index into the segment.
+        u64 revision;
+        Index full_backup_index;  // Only used to renew cursor.
 
         char
         get_char() const;
@@ -61,6 +63,9 @@ struct Buffer {
     TmpCursor
     cursor_at_start() const;
 
+    void
+    renew_cursor(TmpCursor& cur) const;
+
 
     // Internal
 
@@ -71,6 +76,11 @@ struct Buffer {
         DataSegment* last_written_segment;
     };
     BufferData data;
+
+    // Incremented every time the buffer is changed in a way so that
+    // we have to renew its cursors.  Used to see whether a cursor is
+    // still usable.
+    u64 cursor_revision;
 
     Buffer() = delete;
 };
