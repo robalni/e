@@ -21,8 +21,7 @@ editor_main(int, char**) {
     for (;;) {
         Event ev = read_input();
         if (ev.type & Event::CHAR) {
-            buf.insert_char(ev.keysym, buf.len());
-            buf.renew_cursor(cur);
+            buf.insert_char_at_cursor(ev.keysym, cur);
             render_everything(bv);  // TODO: Don't need to.
         }
         if (ev.type & Event::KEYDOWN) {

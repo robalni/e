@@ -25,6 +25,10 @@ split_seg(DataSegment& seg, Buffer::Index seg_index, DataSegment& new_seg) {
     return new_seg;
 }
 
+// Splits NODE in two (if inserting at the beginning or end) or three
+// (if inserting in the middle) and puts CH in the newly allocated
+// segment that does not contain any data yet.  Returns the node that
+// contains the new segment with CH.
 static List<DataSegment>::Node*
 insert_char_in_segment(Buffer& buffer, char ch, List<DataSegment>::Node* node,
                        Buffer::Index index) {
@@ -66,6 +70,12 @@ Buffer::new_empty(MemoryManager&& mem) {
 
 void
 Buffer::insert_char(char ch, Index index) {
+    TmpCursor cur = this->index_to_cursor(index);
+    this->insert_char_at_cursor(ch, cur);
+}
+
+void
+Buffer::insert_char_at_cursor(char ch, TmpCursor &cur) {
     using SegNode = List<DataSegment>::Node;
     if (this->data.segments.first == null) {
         SegNode* first_node = mem.alloc<SegNode>();
@@ -74,37 +84,36 @@ Buffer::insert_char(char ch, Index index) {
         *chp = ch;
         first_node->obj = DataSegment {chp, 1};
         this->data.last_written_segment = &first_node->obj;
+        cur = index_to_cursor(1);
         return;
     }
     DataSegment* latest_seg = this->data.last_written_segment;
-    TmpCursor where = this->index_to_cursor(index);
-    if (where.index == 0 && where.segment->prev != null) {
-        where.segment = where.segment->prev;
-        where.index = where.segment->obj.len;
+    if (cur.index == 0 && cur.segment->prev != null) {
+        cur.segment = cur.segment->prev;
+        cur.index = cur.segment->obj.len;
     }
     void* to_write = null;
     // Are we appending the the same segment as last time?
     // Then we don't need to create a new segment!
-    if (&where.segment->obj == latest_seg) {
-        to_write
-            = this->mem.alloc_at(where.segment->obj.start + where.index, 1);
+    if (&cur.segment->obj == latest_seg) {
+        to_write = this->mem.alloc_at(cur.segment->obj.start + cur.index, 1);
         if (to_write != null) {
-            where.segment->obj.len++;
+            cur.segment->obj.len++;
         }
     }
     // We could not append.  Let's create a new segment.
     if (to_write == null) {
         SegNode* new_node
-            = insert_char_in_segment(*this, ch, where.segment, where.index);
+            = insert_char_in_segment(*this, ch, cur.segment, cur.index);
         to_write = new_node->obj.start;
         latest_seg = &new_node->obj;
-        this->cursor_revision++;
     }
 
     // Write the character.
     char* char_to_write = static_cast<char*>(to_write);
     *char_to_write = ch;
     this->data.last_written_segment = latest_seg;
+    cur = index_to_cursor_relative(cur.segment, cur.index + 1);
 }
 
 void
@@ -169,8 +178,8 @@ Buffer::len() const {
 }
 
 Buffer::TmpCursor
-Buffer::index_to_cursor(Index index) const {
-    List<DataSegment>::Node* node = this->data.segments.first;
+Buffer::index_to_cursor_relative(List<DataSegment>::Node* node,
+                                 Index index) const {
     Index len_sum = 0;
     while (node) {
         if (len_sum + node->obj.len > index || node->next == null) {
@@ -181,6 +190,12 @@ Buffer::index_to_cursor(Index index) const {
     }
 
     return {node, index - len_sum, this->cursor_revision, index};
+}
+
+Buffer::TmpCursor
+Buffer::index_to_cursor(Index index) const {
+    List<DataSegment>::Node* node = this->data.segments.first;
+    return index_to_cursor_relative(node, index);
 }
 
 Buffer::TmpCursor

@@ -47,6 +47,10 @@ struct Buffer {
     void
     insert_char(char ch, Index index);
 
+    // Inserts the character before the cursor.
+    void
+    insert_char_at_cursor(char ch, TmpCursor &cur);
+
     void
     remove_range(TmpCursor first, TmpCursor last);
 
@@ -55,6 +59,9 @@ struct Buffer {
 
     usize
     len() const;
+
+    TmpCursor
+    index_to_cursor_relative(List<DataSegment>::Node* node, Index index) const;
 
     TmpCursor
     index_to_cursor(Index index) const;
