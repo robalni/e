@@ -40,33 +40,44 @@ test_buffer_insert_iterate() {
     {
         Buffer::TmpCursor cur = b.index_to_cursor(0);
         assert(cur.get_char() == 'O');
-        assert(cur.next_char());
+        cur.next_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'H');
-        assert(cur.next_char());
+        cur.next_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'a');
-        assert(cur.next_char());
+        cur.next_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'i');
-        assert(cur.next_char());
+        cur.next_char();
+        assert(cur.has_char());
         assert(cur.get_char() == '!');
-        assert(cur.next_char());
+        cur.next_char();
+        assert(cur.has_char());
         assert(cur.get_char() == '?');
-        assert(!cur.next_char());
-        assert(cur.get_char() == '?');
+        cur.next_char();
+        assert(!cur.has_char());
     }
     {
         Buffer::TmpCursor cur = b.index_to_cursor(5);
         assert(cur.get_char() == '?');
-        assert(cur.prev_char());
+        cur.prev_char();
+        assert(cur.has_char());
         assert(cur.get_char() == '!');
-        assert(cur.prev_char());
+        cur.prev_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'i');
-        assert(cur.prev_char());
+        cur.prev_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'a');
-        assert(cur.prev_char());
+        cur.prev_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'H');
-        assert(cur.prev_char());
+        cur.prev_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'O');
-        assert(!cur.prev_char());
+        cur.prev_char();
+        assert(cur.has_char());
         assert(cur.get_char() == 'O');
     }
 
