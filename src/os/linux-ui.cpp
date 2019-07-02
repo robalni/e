@@ -176,6 +176,9 @@ read_input() {
             KeySym sym = XLookupKeysym(&event.xkey, event.xkey.state & 7);
             Event e;
             e.type = Event::KEYDOWN;
+            if (sym == XK_Return) {
+                sym = '\n';
+            }
             if (key_is_printable(sym)) {
                 e.type |= Event::CHAR;
             }

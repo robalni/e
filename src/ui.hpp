@@ -43,5 +43,5 @@ render_everything(const View& bv);
 
 static inline bool
 key_is_printable(int keysym) {
-    return keysym >= 32 && keysym < 127;
+    return (keysym >= 32 && keysym < 127) || keysym == '\n';
 }
