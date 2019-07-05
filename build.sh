@@ -15,21 +15,21 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-[ -z "$CXX" ] && CXX=c++
-CXXFLAGS="-Wall -Wextra -DLINUX $CXXFLAGS"
+[ -z "$CC" ] && CC=cc
+CFLAGS="-Wall -Wextra -DLINUX $CFLAGS"
 LDFLAGS="-lncurses $LDFLAGS"
 
 if [ $debug ]; then
-    CXXFLAGS="-g $CXXFLAGS"
+    CFLAGS="-g $CFLAGS"
 else
-    CXXFLAGS="-O2 $CXXFLAGS"
+    CFLAGS="-O2 $CFLAGS"
 fi
 
 if [ ! $nogui ]; then
-    CXXFLAGS="`pkg-config --cflags xft` -DHAVE_X11 $CXXFLAGS"
+    CFLAGS="`pkg-config --cflags xft` -DHAVE_X11 $CFLAGS"
     LDFLAGS="`pkg-config --libs x11` `pkg-config --libs xft` $LDFLAGS"
 fi
 
-cmd="$CXX $CXXFLAGS all.cpp $LDFLAGS -o e"
+cmd="$CC $CFLAGS src/editor.c $LDFLAGS -o e"
 echo $cmd
 $cmd

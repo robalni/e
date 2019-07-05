@@ -1,12 +1,10 @@
-#include "../common.hpp"
-
 #include <signal.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 
 ////////////////////////////////////////
-// Memory functions - used by memory.cpp
+// Memory functions - used by memory.c
 
 void*
 os_map_memory(usize size) {
@@ -43,15 +41,15 @@ os_abort() {
 }
 
 #ifdef ENTRY
+public int ENTRY(int, char**);
 int
 main(int argc, char** argv) {
-    int ENTRY(int, char**);
     return ENTRY(argc, argv);
 }
 #else
+public int editor_main(int, char**);
 int
 main(int argc, char** argv) {
-    int editor_main(int, char**);
     return editor_main(argc, argv);
 }
 #endif

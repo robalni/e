@@ -52,10 +52,10 @@ init_gui() {
 
 static XRenderColor
 xcolor(u32 color) {
-    return {
-        u16((color & 0xff0000) >> 8),
-        u16((color & 0x00ff00)),
-        u16((color & 0x0000ff) << 8),
+    return (XRenderColor) {
+        (u16)((color & 0xff0000) >> 8),
+        (u16)((color & 0x00ff00)),
+        (u16)((color & 0x0000ff) << 8),
         0xffff,
     };
 }
@@ -86,11 +86,11 @@ draw_vline(GC gc, int col, int row, int count, int color) {
 }
 
 void
-render_everything(const View& bv) {
+render_everything(const View* bv) {
     // The background.
     draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
 
-    Buffer::TmpCursor cur = bv.cursor_at_start();
+    TmpCursor cur = buf_cursor_at_start(bv->buffer);
     int start_col = 0;
     int row = 0;
     int linenr_width = 5;
@@ -99,8 +99,8 @@ render_everything(const View& bv) {
     bool line_start = true;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
-    for (; cur.has_char(); cur.next_char()) {
-        char c = cur.get_char();
+    for (; cur_has_char(&cur); cur_next_char(&cur)) {
+        char c = cur_get_char(&cur);
         if (line_start) {
             char nr[11] = {0};
             snprintf(nr, 10, "% 4d ", line);
@@ -112,7 +112,7 @@ render_everything(const View& bv) {
             }
             XSetForeground(disp, gc, fg);
         }
-        if (bv.cursor == cur) {
+        if (cursor_eq(&bv->cursor, &cur)) {
             draw_vline(gc, col, row, 1, soft);
         }
         if (c == '\n') {
@@ -127,7 +127,7 @@ render_everything(const View& bv) {
         col++;
         line_start = false;
     }
-    if (cur == bv.cursor) {
+    if (cursor_eq(&cur, &bv->cursor)) {
         draw_vline(gc, col, row, 1, soft);
     }
 
@@ -138,29 +138,29 @@ static int
 to_key_x(int k) {
     switch (k) {
     case XK_Up:
-        return Key::UP;
+        return KEY_UP;
     case XK_Left:
-        return Key::LEFT;
+        return KEY_LEFT;
     case XK_Right:
-        return Key::RIGHT;
+        return KEY_RIGHT;
     case XK_Down:
-        return Key::DOWN;
+        return KEY_DOWN;
     case XK_Home:
-        return Key::HOME;
+        return KEY_HOME;
     case XK_End:
-        return Key::END;
+        return KEY_END;
     case XK_Return:
-        return Key::RETURN;
+        return KEY_RETURN;
     case XK_BackSpace:
-        return Key::BACKSPACE;
+        return KEY_BACKSPACE;
     case XK_Delete:
-        return Key::DEL;
+        return KEY_DEL;
     case XK_Escape:
-        return Key::ESCAPE;
+        return KEY_ESCAPE;
     case XK_Page_Down:
-        return Key::PAGEDOWN;
+        return KEY_PAGEDOWN;
     case XK_Page_Up:
-        return Key::PAGEUP;
+        return KEY_PAGEUP;
     default:
         return k;
     }
@@ -175,12 +175,12 @@ read_input() {
         case KeyPress: {
             KeySym sym = XLookupKeysym(&event.xkey, event.xkey.state & 7);
             Event e;
-            e.type = Event::KEYDOWN;
+            e.type = EVENT_KEYDOWN;
             if (sym == XK_Return) {
                 sym = '\n';
             }
             if (key_is_printable(sym)) {
-                e.type |= Event::CHAR;
+                e.type |= EVENT_CHAR;
             }
             e.keysym = to_key_x(sym);
             return e;
@@ -196,7 +196,7 @@ read_input() {
                 win_buf = XCreatePixmap(disp, win, win_w, win_h, 24);
                 draw = XftDrawCreate(disp, win_buf, vis, colormap);
                 Event e;
-                e.type = Event::RENDER;
+                e.type = EVENT_RENDER;
                 return e;
             }
         } break;
@@ -207,14 +207,14 @@ read_input() {
             XCopyArea(disp, win_buf, win, gc, x, y, w, h, x, y);
         } break;
         case ClientMessage: {
-            Atom received_atom = static_cast<Atom>(event.xclient.data.l[0]);
+            Atom received_atom = (Atom)event.xclient.data.l[0];
             if (received_atom == delete_window_message) {
                 Event e;
-                e.type = Event::QUIT;
+                e.type = EVENT_QUIT;
                 return e;
             }
         } break;
         }
     }
-    return {Event::UNKNOWN};
+    return (Event) {EVENT_UNKNOWN};
 }
