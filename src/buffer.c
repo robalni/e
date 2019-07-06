@@ -216,18 +216,6 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
     }
 }
 
-private char
-buf_char_at(const Buffer* buf, Index index) {
-    const ListNode(DataSegment)* node = buf->data.segments.first;
-    usize chars_passed = 0;
-    while (node && chars_passed + node->obj.len <= index) {
-        chars_passed += node->obj.len;
-        node = node->next;
-    }
-    assert(node);
-    return node->obj.start[index - chars_passed];
-}
-
 private usize
 buf_len(const Buffer* buf) {
     const ListNode(DataSegment)* node = buf->data.segments.first;

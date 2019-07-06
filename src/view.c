@@ -28,15 +28,8 @@ new_view_into_buffer(Buffer* b) {
     };
 }
 
-// Returns cursor pointing to the first character in this view.
-public TmpCursor
-cursor_at_start(const View* view) {
-    assert(view);
-    return buf_index_to_cursor(view->buffer, 0);
-}
-
 public void
-set_active_view(ViewList* vl, const View* v) {
+set_active_view(ViewList* vl, View* v) {
     assert(vl);
     assert(v);
 
