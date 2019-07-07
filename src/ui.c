@@ -32,7 +32,7 @@ struct Event {
 };
 typedef struct Event Event;
 
-static bool
+public bool
 key_is_printable(int keysym) {
     return (keysym >= 32 && keysym < 127) || keysym == '\n';
 }

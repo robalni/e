@@ -30,10 +30,10 @@ typedef  ssize_t isize;
 #define ERROR(msg)  \
     os_write_err(msg " (" __FILE__ ":" STR(__LINE__) ")\n")
 
-static void
+public void
 os_abort();
 
-static void
+public void
 os_write_err(const char* str);
 
 #define assert(expr)  \

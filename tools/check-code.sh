@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Non-public functions used in other files:"
-for f in src/*.c; do
+for f in src/*.c src/os/*.c; do
     privs=`perl -n \
         -e '/^public / && ($p = 0);' \
         -e '/;/ && ($p = 0);' \
@@ -12,7 +12,7 @@ for f in src/*.c; do
     for priv in $privs; do
         name=`echo $priv | cut -d : -f 1`
         ln=`echo $priv | cut -d : -f 2`
-        grep --color=always -n "$name" src/*.c --exclude $f \
+        grep --color=always -n "\\<$name *(" src/*.c src/os/*.c --exclude $f \
             && echo "  ...defined in $f:$ln"
     done
 done

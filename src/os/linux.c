@@ -6,7 +6,7 @@
 ////////////////////////////////////////
 // Memory functions - used by memory.c
 
-void*
+public void*
 os_map_memory(usize size) {
     int prot = PROT_READ | PROT_WRITE;
     int flags = MAP_PRIVATE | MAP_ANONYMOUS;
@@ -17,7 +17,7 @@ os_map_memory(usize size) {
     return addr;
 }
 
-void
+public void
 os_unmap_memory(void* addr, usize size) {
     munmap(addr, size);
 }
@@ -26,7 +26,7 @@ os_unmap_memory(void* addr, usize size) {
 ////////////////////////////////////////
 // Other functions
 
-void
+public void
 os_write_err(const char* str) {
     usize len = 0;
     for (usize i = 0; str[i] != '\0'; i++) {
@@ -35,7 +35,7 @@ os_write_err(const char* str) {
     write(STDERR_FILENO, str, len);
 }
 
-void
+public void
 os_abort() {
     kill(getpid(), SIGABRT);
 }

@@ -298,7 +298,7 @@ cur_prev_char(TmpCursor* cur) {
 
 // Two TmpCursor are equal if they point to the same segment
 // and have the same index.
-private bool
+public bool
 cursor_eq(const TmpCursor* a, const TmpCursor* b) {
     return a->segment == b->segment
         && a->index == b->index;

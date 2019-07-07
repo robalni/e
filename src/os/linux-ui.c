@@ -19,7 +19,7 @@ static u64 soft = 0x999999;
 static u8 fontw = 10;
 static u8 fonth = 20;
 
-Result
+public Result
 init_gui() {
     disp = XOpenDisplay(null);
     if (!disp) {
@@ -50,7 +50,7 @@ init_gui() {
     return true;
 }
 
-static XRenderColor
+private XRenderColor
 xcolor(u32 color) {
     return (XRenderColor) {
         (u16)((color & 0xff0000) >> 8),
@@ -60,7 +60,7 @@ xcolor(u32 color) {
     };
 }
 
-static void
+private void
 draw_char(char c, GC gc, int col, int row,
                       XRenderColor color) {
     XftColor xft_color = {0, color};
@@ -69,7 +69,7 @@ draw_char(char c, GC gc, int col, int row,
     XftDrawString8(draw, &xft_color, font, x, y, (FcChar8 *)&c, 1);
 }
 
-static void
+private void
 draw_rect(GC gc, int col, int row, int w, int h, int color) {
     XSetForeground(disp, gc, color);
     XFillRectangle(disp, win_buf, gc, col * fontw, row * fonth, w * fontw,
@@ -77,7 +77,7 @@ draw_rect(GC gc, int col, int row, int w, int h, int color) {
     XSetForeground(disp, gc, fg);
 }
 
-static void
+private void
 draw_vline(GC gc, int col, int row, int count, int color) {
     XSetForeground(disp, gc, color);
     XFillRectangle(disp, win_buf, gc, col * fontw - 1, row * fonth + 1, 2,
@@ -85,7 +85,7 @@ draw_vline(GC gc, int col, int row, int count, int color) {
     XSetForeground(disp, gc, fg);
 }
 
-void
+public void
 render_everything(const View* bv) {
     // The background.
     draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
@@ -166,7 +166,7 @@ to_key_x(int k) {
     }
 }
 
-Event
+public Event
 read_input() {
     XEvent event;
     for (;;) {
