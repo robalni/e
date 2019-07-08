@@ -90,20 +90,23 @@ render_everything(const View* bv) {
     // The background.
     draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
 
-    TmpCursor cur = buf_cursor_at_start(bv->buffer);
+    TmpCursor cur = view_cursor_at_start(bv);
     int start_col = 0;
     int row = 0;
     int linenr_width = 5;
     int col = start_col + linenr_width;
-    int line = 1;
+    int linenr = bv->offset_y + 1;
+    int line_count = 0;
     bool line_start = true;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
         char c = cur_get_char(&cur);
         if (line_start) {
+            draw_rect(gc, start_col, row, 80, 1, bg);
+            line_count++;
             char nr[11] = {0};
-            snprintf(nr, 10, "% 4d ", line);
+            snprintf(nr, 10, "% 4d ", linenr);
             col -= linenr_width;
             for (size_t j = 0; j < 5; j++) {
                 draw_char(nr[j], gc, col, row, xcolor_soft);
@@ -116,10 +119,12 @@ render_everything(const View* bv) {
             draw_vline(gc, col, row, 1, soft);
         }
         if (c == '\n') {
+            if (line_count >= bv->height) {
+                break;
+            }
             row++;
-            line++;
             col = start_col + linenr_width;
-            draw_rect(gc, start_col, row, 80, 1, bg);
+            linenr++;
             line_start = true;
             continue;
         }
