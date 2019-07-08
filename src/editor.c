@@ -1,4 +1,5 @@
 #include "common.c"
+#include "os.h"
 #include "ui.c"
 
 #ifdef LINUX

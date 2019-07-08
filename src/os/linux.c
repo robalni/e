@@ -10,7 +10,6 @@
 struct File {
     int fd;
 };
-typedef struct File File;
 
 public File
 os_open_file(const char* filename) {

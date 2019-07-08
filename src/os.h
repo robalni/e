@@ -1,14 +1,13 @@
 #pragma once
 
-#include "common.c"
-
 
 ////////////////////////////////////////
 // File
 
 struct File;
+typedef struct File File;
 
-public struct File
+public File
 os_open_file(const char* filename);
 
 public size_t
