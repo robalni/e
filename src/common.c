@@ -27,14 +27,14 @@ typedef  ssize_t isize;
 #define STR_(s) #s
 #define STR(s) STR_(s)
 
-#define ERROR(msg)  \
-    os_write_err(msg " (" __FILE__ ":" STR(__LINE__) ")\n")
-
 public void
 os_abort();
 
 public void
 os_write_err(const char* str);
+
+#define ERROR(msg)  \
+    os_write_err(msg " (" __FILE__ ":" STR(__LINE__) ")\n")
 
 #define assert(expr)  \
     do {  \

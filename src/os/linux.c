@@ -1,6 +1,38 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <fcntl.h>
+
+
+////////////////////////////////////////
+// File functions
+
+struct File {
+    int fd;
+};
+typedef struct File File;
+
+public File
+os_open_file(const char* filename) {
+    return (File) {open(filename, O_RDONLY)};
+}
+
+public size_t
+os_file_size(File f) {
+    off_t size = lseek(f.fd, 0, SEEK_END);
+    lseek(f.fd, 0, SEEK_SET);
+    return size;
+}
+
+public void
+os_file_read_all(File f, char* buf, size_t buf_size) {
+    read(f.fd, buf, buf_size);
+}
+
+public void
+os_close_file(File f) {
+    close(f.fd);
+}
 
 
 ////////////////////////////////////////

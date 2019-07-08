@@ -1,16 +1,22 @@
 #include "common.c"
-#include "list.c"
-#include "memory.c"
-#include "buffer.c"
-#include "view.c"
 #include "ui.c"
 
 #ifdef LINUX
 #  include "os/linux.c"
-#  include "os/linux-ui.c"
 #endif
 #ifdef WINDOWS
 #  include "os/windows.c"
+#endif
+
+#include "list.c"
+#include "memory.c"
+#include "buffer.c"
+#include "view.c"
+
+#ifdef LINUX
+#  include "os/linux-ui.c"
+#endif
+#ifdef WINDOWS
 #  include "os/windows-ui.c"
 #endif
 
@@ -27,7 +33,12 @@ editor_main(int argc, char** argv) {
     BufferList buffers = {0};
     ViewList views = {0};
 
-    Buffer buf = new_buffer_empty(new_mem_default());
+    Buffer buf;
+    if (argc == 2) {
+        buf = new_buffer_from_file(new_mem_default(), argv[1]);
+    } else {
+        buf = new_buffer_empty(new_mem_default());
+    }
     View view = new_view_into_buffer(&buf);
 
     set_active_view(&views, &view);

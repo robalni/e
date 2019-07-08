@@ -97,6 +97,32 @@ new_buffer_empty(Memory mem) {
     };
 }
 
+public Buffer
+new_buffer_from_file(Memory mem, const char* filename) {
+    assert(filename);
+    typedef ListNode(DataSegment) SegNode;
+
+    List(DataSegment) segs = new_list_empty(DataSegment);
+    SegNode* seg = mem_alloc(&mem, SegNode);
+    list_add_last(&segs, seg);
+
+    File file = os_open_file(filename);
+    size_t file_size = os_file_size(file);
+    seg->obj.start = mem_alloc_size(&mem, file_size);
+    seg->obj.len = file_size;
+    os_file_read_all(file, seg->obj.start, file_size);
+    os_close_file(file);
+
+    return (Buffer) {
+        .mem = mem,
+        .data = (struct BufferData) {
+            .segments = segs,
+            .last_written_segment = &seg->obj,
+        },
+        .cursor_revision = 0,
+    };
+}
+
 public TmpCursor
 buf_index_to_cursor_relative(const Buffer* buf, ListNode(DataSegment)* node,
                              Index index) {
