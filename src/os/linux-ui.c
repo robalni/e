@@ -134,7 +134,7 @@ render_everything(const View* bv) {
     XCopyArea(disp, win_buf, win, gc, 0, 0, win_w, win_h, 0, 0);
 }
 
-static int
+private int
 to_key_x(int k) {
     switch (k) {
     case XK_Up:
