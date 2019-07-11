@@ -10,7 +10,7 @@ struct DataSegment {
     // Incremented when this segment is changed in a way that requires
     // cursors to be renewed.  If a cursor in this segment has a
     // revision less than this then it needs to be renewed.
-    u32 revision;
+    u64 revision;
 };
 typedef struct DataSegment DataSegment;
 make_list_type(DataSegment);
@@ -29,6 +29,11 @@ struct Buffer {
     // we have to renew its cursors.  Used to see whether a cursor is
     // still usable.
     u64 cursor_revision;
+
+    struct LatestChange {
+        Index where;
+        i32 chars_added;
+    } latest_change;
 };
 typedef struct Buffer Buffer;
 make_list_type(Buffer);
@@ -49,7 +54,8 @@ typedef List(Buffer) BufferList;
 // Splits SEG in two at SEG_INDEX and puts the second one in NEW_SEG.
 // Returns NEW_SEG.
 private DataSegment*
-split_seg(DataSegment* seg, Index seg_index, DataSegment* new_seg) {
+split_seg(const Buffer* buf, DataSegment* seg, Index seg_index,
+          DataSegment* new_seg) {
     assert(seg);
     assert(new_seg);
     if (seg_index > seg->len) {
@@ -77,7 +83,7 @@ insert_char_in_segment(Buffer* buffer, char ch, ListNode(DataSegment)* node,
     DataSegment* segment = &node->obj;
     SegNode* second_node = mem_alloc(&buffer->mem, SegNode);
     list_insert(&buffer->data.segments, second_node, node->next);
-    split_seg(segment, index, &second_node->obj);
+    split_seg(buffer, segment, index, &second_node->obj);
     SegNode* new_node;
     if (second_node->obj.len == 0) {
         new_node = second_node;
@@ -168,6 +174,11 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
     assert(buf);
     assert(cur);
     typedef ListNode(DataSegment) SegNode;
+
+    buf->cursor_revision++;
+    buf->latest_change.where = cur->full_backup_index;
+    buf->latest_change.chars_added = 1;
+
     if (buf->data.segments.first == null) {
         SegNode* first_node = mem_alloc(&buf->mem, SegNode);
         list_add_last(&buf->data.segments, first_node);
@@ -223,8 +234,13 @@ private void
 buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
     assert(buf);
     typedef ListNode(DataSegment) SegNode;
-    buf->cursor_revision++;
     SegNode* node = first.segment;
+
+    buf->cursor_revision++;
+    buf->latest_change.where = first.full_backup_index;
+    buf->latest_change.chars_added
+        = -(last.full_backup_index - first.full_backup_index + 1);
+
     // Look at each node and remove it or change the size of it.
     for (;;) {
         SegNode* next_node = node->next;
@@ -234,9 +250,9 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
             = node == last.segment && last.index < node->obj.len - 1;
         if (!chars_to_left && !chars_to_right) {
             list_remove(&buf->data.segments, node);
-            node->obj.revision++;
+            node->obj.revision = buf->cursor_revision;
         } else if (chars_to_left && chars_to_right) {
-            node->obj.revision++;
+            node->obj.revision = buf->cursor_revision;
             SegNode* right_node = mem_alloc(&buf->mem, SegNode);
             right_node->obj = (DataSegment) {
                 .start = node->obj.start + last.index + 1,
@@ -246,13 +262,13 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
             list_insert(&buf->data.segments, right_node, node->next);
         } else {
             if (chars_to_left) {
-                node->obj.revision++;
+                node->obj.revision = buf->cursor_revision;
                 node->obj.len = first.index;
             }
             if (chars_to_right) {
                 node->obj.start += last.index + 1;
                 node->obj.len -= last.index + 1;
-                node->obj.revision++;
+                node->obj.revision = buf->cursor_revision;
             }
         }
         if (node == last.segment) {
@@ -283,14 +299,6 @@ buf_cursor_at_start(const Buffer* buf) {
         .revision = buf->cursor_revision,
         .full_backup_index = 0,
     };
-}
-
-void
-buf_renew_cursor(const Buffer* buf, TmpCursor* cur) {
-    assert(cur);
-    if (cur->revision != buf->cursor_revision) {
-        *cur = buf_index_to_cursor(buf, cur->full_backup_index);
-    }
 }
 
 public char

@@ -23,27 +23,33 @@
 
 
 private void
-buffer_modified(const Buffer* buf, ViewList* views) {
-    View* view = views->active_view;
-    if (view->cursor.segment) {
-        bool cursor_too_old = view->cursor.segment->obj.revision
-            > view->cursor.revision;
+buffer_modified_update_cursor(const Buffer* buf, TmpCursor* cur) {
+    if (cur->segment) {
+        bool cursor_too_old = cur->segment->obj.revision > cur->revision;
         if (cursor_too_old) {
-            view->cursor
-                = buf_index_to_cursor(buf, view->cursor.full_backup_index);
+            i32 to_add = 0;
+            if (buf->latest_change.where < cur->full_backup_index) {
+                to_add = buf->latest_change.chars_added;
+                const struct LatestChange* lc = &buf->latest_change;
+                if (lc->chars_added < 0 && cur->full_backup_index - lc->where
+                                           > lc->chars_added) {
+                    to_add = lc->where - cur->full_backup_index;
+                }
+            }
+            cur->full_backup_index += to_add;
+            *cur = buf_index_to_cursor(buf, cur->full_backup_index);
         }
     }
+}
+
+private void
+buffer_modified(const Buffer* buf, ViewList* views) {
+    View* view = views->active_view;
+    buffer_modified_update_cursor(buf, &view->cursor);
     if (view->start_cursor.segment == null) {
         view->start_cursor = buf_index_to_cursor(buf, 0);
     }
-    if (view->start_cursor.segment) {
-        bool cursor_too_old = view->start_cursor.segment->obj.revision
-            > view->start_cursor.revision;
-        if (cursor_too_old) {
-            view->start_cursor = buf_index_to_cursor(buf,
-                                          view->start_cursor.full_backup_index);
-        }
-    }
+    buffer_modified_update_cursor(buf, &view->start_cursor);
 }
 
 // This function is directly called by the real main function found in
