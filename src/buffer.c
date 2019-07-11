@@ -6,10 +6,11 @@ typedef u32 Index;
 struct DataSegment {
     char* start;
     usize len;
+
     // Incremented when this segment is changed in a way that requires
-    // cursors to be renewed.  If a cursor has a revision less than
-    // this then it needs to be renewed.
-    bool revision;
+    // cursors to be renewed.  If a cursor in this segment has a
+    // revision less than this then it needs to be renewed.
+    u32 revision;
 };
 typedef struct DataSegment DataSegment;
 make_list_type(DataSegment);
@@ -88,7 +89,11 @@ insert_char_in_segment(Buffer* buffer, char ch, ListNode(DataSegment)* node,
     }
     char* chp = mem_alloc(&buffer->mem, char);
     *chp = ch;
-    new_node->obj = (DataSegment) {chp, 1, segment->revision};
+    new_node->obj = (DataSegment) {
+        .start = chp,
+        .len = 1,
+        .revision = segment->revision,
+    };
     return new_node;
 }
 
@@ -168,7 +173,11 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
         list_add_last(&buf->data.segments, first_node);
         char* chp = mem_alloc(&buf->mem, char);
         *chp = ch;
-        first_node->obj = (DataSegment) {chp, 1, buf->cursor_revision};
+        first_node->obj = (DataSegment) {
+            .start = chp,
+            .len = 1,
+            .revision = buf->cursor_revision,
+        };
         buf->data.last_written_segment = &first_node->obj;
         *cur = buf_index_to_cursor(buf, 1);
         return;
@@ -237,8 +246,8 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
             list_insert(&buf->data.segments, right_node, node->next);
         } else {
             if (chars_to_left) {
-                node->obj.len = first.index;
                 node->obj.revision++;
+                node->obj.len = first.index;
             }
             if (chars_to_right) {
                 node->obj.start += last.index + 1;
