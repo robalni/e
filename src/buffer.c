@@ -225,7 +225,9 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
             = node == last.segment && last.index < node->obj.len - 1;
         if (!chars_to_left && !chars_to_right) {
             list_remove(&buf->data.segments, node);
+            node->obj.revision++;
         } else if (chars_to_left && chars_to_right) {
+            node->obj.revision++;
             SegNode* right_node = mem_alloc(&buf->mem, SegNode);
             right_node->obj = (DataSegment) {
                 .start = node->obj.start + last.index + 1,
@@ -236,10 +238,12 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
         } else {
             if (chars_to_left) {
                 node->obj.len = first.index;
+                node->obj.revision++;
             }
             if (chars_to_right) {
                 node->obj.start += last.index + 1;
                 node->obj.len -= last.index + 1;
+                node->obj.revision++;
             }
         }
         if (node == last.segment) {

@@ -84,6 +84,14 @@ editor_main(int argc, char** argv) {
             case KEY_LEFT:
                 cur_prev_char(&view.cursor);
                 break;
+            case KEY_BACKSPACE: {
+                TmpCursor where_to_remove = view.cursor;
+                cur_prev_char(&where_to_remove);
+                if (!cursor_eq(&view.cursor, &where_to_remove)) {
+                    buf_remove_range(&buf, where_to_remove, where_to_remove);
+                    buffer_modified(&buf, &views);
+                }
+            } break;
             }
             render_everything(&view);  // TODO: Don't need to.
         }
