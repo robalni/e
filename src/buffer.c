@@ -6,6 +6,10 @@ typedef u32 Index;
 struct DataSegment {
     char* start;
     usize len;
+    // Incremented when this segment is changed in a way that requires
+    // cursors to be renewed.  If a cursor has a revision less than
+    // this then it needs to be renewed.
+    bool revision;
 };
 typedef struct DataSegment DataSegment;
 make_list_type(DataSegment);
@@ -52,6 +56,9 @@ split_seg(DataSegment* seg, Index seg_index, DataSegment* new_seg) {
     }
     new_seg->start = seg->start + seg_index;
     new_seg->len = seg->len - seg_index;
+    if (seg_index < seg->len) {
+        seg->revision++;
+    }
     seg->len = seg_index;
     return new_seg;
 }
@@ -81,7 +88,7 @@ insert_char_in_segment(Buffer* buffer, char ch, ListNode(DataSegment)* node,
     }
     char* chp = mem_alloc(&buffer->mem, char);
     *chp = ch;
-    new_node->obj = (DataSegment) {chp, 1};
+    new_node->obj = (DataSegment) {chp, 1, segment->revision};
     return new_node;
 }
 
@@ -161,7 +168,7 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
         list_add_last(&buf->data.segments, first_node);
         char* chp = mem_alloc(&buf->mem, char);
         *chp = ch;
-        first_node->obj = (DataSegment) {chp, 1};
+        first_node->obj = (DataSegment) {chp, 1, buf->cursor_revision};
         buf->data.last_written_segment = &first_node->obj;
         *cur = buf_index_to_cursor(buf, 1);
         return;
@@ -291,17 +298,19 @@ cur_has_char(const TmpCursor* cur) {
 public void
 cur_next_char(TmpCursor* cur) {
     assert(cur);
-    cur->index++;
-    cur->full_backup_index++;
-    // If this is last segment (segment->next is null) then we should
-    // go out of bounds to mark that we reached EOF.
-    if (cur->index >= cur->segment->obj.len) {
-        if (cur->segment->next) {
-            cur->segment = cur->segment->next;
-            cur->index = 0;
-        } else {
-            cur->index = cur->segment->obj.len;
-            cur->full_backup_index--;
+    if (cur->segment) {
+        cur->index++;
+        cur->full_backup_index++;
+        // If this is last segment (segment->next is null) then we should
+        // go out of bounds to mark that we reached EOF.
+        if (cur->index >= cur->segment->obj.len) {
+            if (cur->segment->next) {
+                cur->segment = cur->segment->next;
+                cur->index = 0;
+            } else {
+                cur->index = cur->segment->obj.len;
+                cur->full_backup_index--;
+            }
         }
     }
 }
@@ -314,7 +323,7 @@ cur_prev_char(TmpCursor* cur) {
         cur->index--;
         cur->full_backup_index--;
     } else {
-        if (cur->segment->prev) {
+        if (cur->segment && cur->segment->prev) {
             cur->segment = cur->segment->prev;
             cur->index = cur->segment->obj.len - 1;
             cur->full_backup_index--;

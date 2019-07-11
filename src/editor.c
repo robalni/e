@@ -22,6 +22,30 @@
 #endif
 
 
+private void
+buffer_modified(const Buffer* buf, ViewList* views) {
+    View* view = views->active_view;
+    if (view->cursor.segment) {
+        bool cursor_too_old = view->cursor.segment->obj.revision
+            > view->cursor.revision;
+        if (cursor_too_old) {
+            view->cursor
+                = buf_index_to_cursor(buf, view->cursor.full_backup_index);
+        }
+    }
+    if (view->start_cursor.segment == null) {
+        view->start_cursor = buf_index_to_cursor(buf, 0);
+    }
+    if (view->start_cursor.segment) {
+        bool cursor_too_old = view->start_cursor.segment->obj.revision
+            > view->start_cursor.revision;
+        if (cursor_too_old) {
+            view->start_cursor = buf_index_to_cursor(buf,
+                                          view->start_cursor.full_backup_index);
+        }
+    }
+}
+
 // This function is directly called by the real main function found in
 // the os directory.
 public int
@@ -49,6 +73,7 @@ editor_main(int argc, char** argv) {
         Event ev = read_input();
         if (ev.type & EVENT_CHAR) {
             buf_insert_char_at_cursor(&buf, ev.keysym, &view.cursor);
+            buffer_modified(&buf, &views);
             render_everything(&view);  // TODO: Don't need to.
         }
         if (ev.type & EVENT_KEYDOWN) {
