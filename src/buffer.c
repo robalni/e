@@ -143,7 +143,7 @@ new_buffer_from_file(Memory mem, const char* filename) {
 
 public TmpCursor
 buf_index_to_cursor_relative(const Buffer* buf, ListNode(DataSegment)* node,
-                             Index index) {
+                             Index index, Index full_index_of_node) {
     Index len_sum = 0;
     while (node) {
         if (len_sum + node->obj.len > index || node->next == null) {
@@ -157,7 +157,7 @@ buf_index_to_cursor_relative(const Buffer* buf, ListNode(DataSegment)* node,
         .segment = node,
         .index = index - len_sum,
         .revision = buf->cursor_revision,
-        .full_backup_index = index,
+        .full_backup_index = full_index_of_node + index,
     };
 }
 
@@ -165,7 +165,7 @@ public TmpCursor
 buf_index_to_cursor(const Buffer* buf, Index index) {
     assert(buf);
     ListNode(DataSegment)* node = buf->data.segments.first;
-    return buf_index_to_cursor_relative(buf, node, index);
+    return buf_index_to_cursor_relative(buf, node, index, 0);
 }
 
 // Inserts the character before the cursor.
@@ -174,6 +174,7 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
     assert(buf);
     assert(cur);
     typedef ListNode(DataSegment) SegNode;
+    Index full_index_of_segment = cur->full_backup_index - cur->index;
 
     buf->cursor_revision++;
     buf->latest_change.where = cur->full_backup_index;
@@ -195,8 +196,11 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
     }
     DataSegment* latest_seg = buf->data.last_written_segment;
     if (cur->index == 0 && cur->segment->prev != null) {
+        // This is just for use in this function.  The cursor will be
+        // replaced later in this function.
         cur->segment = cur->segment->prev;
         cur->index = cur->segment->obj.len;
+        full_index_of_segment -= cur->index;
     }
     void* to_write = null;
     // Are we appending the the same segment as last time?
@@ -220,7 +224,8 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
     char* char_to_write = (char*)to_write;
     *char_to_write = ch;
     buf->data.last_written_segment = latest_seg;
-    *cur = buf_index_to_cursor_relative(buf, cur->segment, cur->index + 1);
+    *cur = buf_index_to_cursor_relative(buf, cur->segment, cur->index + 1,
+                                        full_index_of_segment);
 }
 
 // Inserts the character before index.
