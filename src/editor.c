@@ -25,12 +25,13 @@
 private void
 buffer_modified_update_cursor(const Buffer* buf, TmpCursor* cur) {
     if (cur->segment) {
-        bool cursor_too_old = cur->segment->obj.revision > cur->revision;
+        const struct LatestChange* lc = &buf->latest_change;
+        bool cursor_too_old = buf->cursor_revision > cur->revision
+            && lc->where <= cur->full_backup_index;
         if (cursor_too_old) {
             i32 to_add = 0;
-            if (buf->latest_change.where < cur->full_backup_index) {
+            if (lc->where < cur->full_backup_index) {
                 to_add = buf->latest_change.chars_added;
-                const struct LatestChange* lc = &buf->latest_change;
                 if (lc->chars_added < 0 && cur->full_backup_index - lc->where
                                            > lc->chars_added) {
                     to_add = lc->where - cur->full_backup_index;

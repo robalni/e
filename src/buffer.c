@@ -328,8 +328,8 @@ cur_next_char(TmpCursor* cur) {
             if (cur->segment->next) {
                 cur->segment = cur->segment->next;
                 cur->index = 0;
-            } else {
-                cur->index = cur->segment->obj.len;
+            } else if (cur->index > cur->segment->obj.len) {
+                cur->index--;
                 cur->full_backup_index--;
             }
         }
