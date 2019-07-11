@@ -49,6 +49,5 @@ set_active_view(ViewList* vl, View* v) {
 public TmpCursor
 view_cursor_at_start(const View* view) {
     assert(view);
-    // FIXME: This cursor will be invalid if the buffer is changed!
     return view->start_cursor;
 }
