@@ -24,7 +24,7 @@
 
 private void
 buffer_modified_update_cursor(const Buffer* buf, TmpCursor* cur) {
-    if (cur->segment) {
+    if (cur->pos.segment) {
         const struct LatestChange* lc = &buf->latest_change;
         bool cursor_too_old = buf->cursor_revision > cur->revision
             && lc->where <= cur->full_backup_index;
@@ -47,7 +47,7 @@ private void
 buffer_modified(const Buffer* buf, ViewList* views) {
     View* view = views->active_view;
     buffer_modified_update_cursor(buf, &view->cursor);
-    if (view->start_cursor.segment == null) {
+    if (view->start_cursor.pos.segment == null) {
         view->start_cursor = buf_index_to_cursor(buf, 0);
     }
     buffer_modified_update_cursor(buf, &view->start_cursor);
@@ -90,6 +90,12 @@ editor_main(int argc, char** argv) {
                 break;
             case KEY_LEFT:
                 cur_prev_char(&view.cursor);
+                break;
+            case KEY_UP:
+                cur_up_line(&view.cursor);
+                break;
+            case KEY_DOWN:
+                cur_down_line(&view.cursor);
                 break;
             case KEY_BACKSPACE: {
                 TmpCursor where_to_remove = view.cursor;

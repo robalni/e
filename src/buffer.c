@@ -41,11 +41,22 @@ make_list_type(Buffer);
 // Only valid until the buffer data has been modified.  This is
 // because it points to a segment that can disappear or change.
 // It is normally used for iterating without changing anything.
-struct TmpCursor {
+struct BufPos {
     ListNode(DataSegment)* segment;
     Index index;  // Index into the segment.
+};
+typedef struct BufPos BufPos;
+
+// Only valid until the buffer data has been modified.  This is
+// because it points to a segment that can disappear or change.
+// It is normally used for iterating without changing anything.
+struct TmpCursor {
+    BufPos pos;
     u64 revision;
     Index full_backup_index;  // Only used to renew cursor.
+    // The column that the cursor should go back to when it can when
+    // moving up or down.
+    u32 wanted_column;
 };
 typedef struct TmpCursor TmpCursor;
 
@@ -141,6 +152,180 @@ new_buffer_from_file(Memory mem, const char* filename) {
     };
 }
 
+public char
+bufpos_get_char(const BufPos* bp) {
+    assert(bp);
+    assert(bp->index <= bp->segment->obj.len);
+    return bp->segment->obj.start[bp->index];
+}
+
+// Returns true if there is a char at the current position.
+public bool
+cur_has_char(const TmpCursor* cur) {
+    assert(cur);
+    return cur->pos.segment && cur->pos.segment->obj.len > cur->pos.index;
+}
+
+private void
+bufpos_next_char(BufPos* bp) {
+    assert(bp);
+    if (bp->segment) {
+        bp->index++;
+        if (bp->index >= bp->segment->obj.len) {
+            if (bp->segment->next) {
+                bp->segment = bp->segment->next;
+                bp->index = 0;
+            } else if (bp->index > bp->segment->obj.len) {
+                bp->index--;
+            }
+        }
+    }
+}
+
+public u32
+cur_get_column(const TmpCursor* cursor);
+
+// Updates the cursor to reference the next char.
+public void
+cur_next_char(TmpCursor* cur) {
+    assert(cur);
+    if (cur->pos.segment) {
+        cur->pos.index++;
+        cur->full_backup_index++;
+        // If this is last segment (segment->next is null) then we should
+        // go out of bounds to mark that we reached EOF.
+        if (cur->pos.index >= cur->pos.segment->obj.len) {
+            if (cur->pos.segment->next) {
+                cur->pos.segment = cur->pos.segment->next;
+                cur->pos.index = 0;
+            } else if (cur->pos.index > cur->pos.segment->obj.len) {
+                cur->pos.index--;
+                cur->full_backup_index--;
+            }
+        }
+        cur->wanted_column = cur_get_column(cur);
+    }
+}
+
+private void
+bufpos_prev_char(BufPos* bp) {
+    assert(bp);
+    if (bp->segment) {
+        if (bp->index > 0) {
+            bp->index--;
+        } else {
+            if (bp->segment->prev) {
+                bp->segment = bp->segment->prev;
+                bp->index = bp->segment->obj.len - 1;
+            }
+        }
+    }
+}
+
+// Same as cur_next_char but backwards.
+public void
+cur_prev_char(TmpCursor* cur) {
+    assert(cur);
+    if (cur->pos.segment) {
+        if (cur->pos.index > 0) {
+            cur->pos.index--;
+            cur->full_backup_index--;
+        } else {
+            if (cur->pos.segment->prev) {
+                cur->pos.segment = cur->pos.segment->prev;
+                cur->pos.index = cur->pos.segment->obj.len - 1;
+                cur->full_backup_index--;
+            }
+        }
+        cur->wanted_column = cur_get_column(cur);
+    }
+}
+
+public void
+cur_start_line(TmpCursor* cur) {
+    for (;;) {
+        if (cur->full_backup_index == 0) {
+            break;
+        }
+        cur_prev_char(cur);
+        char c = bufpos_get_char(&cur->pos);
+        if (c == '\n') {
+            cur_next_char(cur);
+            break;
+        }
+    }
+}
+
+public void
+cur_up_line(TmpCursor* cur) {
+    u32 wanted_column = cur->wanted_column;
+    cur_start_line(cur);
+    cur_prev_char(cur);
+    cur_start_line(cur);
+    for (u32 i = 0;
+         i < wanted_column && bufpos_get_char(&cur->pos) != '\n';
+         i++) {
+        cur_next_char(cur);
+    }
+    cur->wanted_column = wanted_column;
+}
+
+public bool
+bufpos_is_start_buffer(const BufPos* bp) {
+    assert(bp);
+    return bp->segment == null || (bp->index == 0 && bp->segment->prev == null);
+}
+
+public bool
+bufpos_is_end_buffer(const BufPos* bp) {
+    assert(bp);
+    return bp->segment == null || bp->index >= bp->segment->obj.len;
+}
+
+public void
+cur_down_line(TmpCursor* cur) {
+    bool hit_end = false;
+    TmpCursor cur_backup = *cur;
+    u32 wanted_column = cur->wanted_column;
+    for (i32 i = 0;
+         cur_has_char(cur) && bufpos_get_char(&cur->pos) != '\n';
+         i++) {
+        cur_next_char(cur);
+        if (bufpos_is_end_buffer(&cur->pos)) {
+            hit_end = true;
+        }
+    }
+    cur_next_char(cur);
+    for (u32 i = 0;
+         i < wanted_column && bufpos_get_char(&cur->pos) != '\n';
+         i++) {
+        cur_next_char(cur);
+    }
+    cur->wanted_column = wanted_column;
+    if (hit_end) {
+        *cur = cur_backup;
+    }
+}
+
+public u32
+cur_get_column(const TmpCursor* cursor) {
+    BufPos bp = cursor->pos;
+    u32 column = 0;
+    for (;;) {
+        if (bufpos_is_start_buffer(&bp)) {
+            break;
+        }
+        bufpos_prev_char(&bp);
+        char c = bufpos_get_char(&bp);
+        if (c == '\n') {
+            bufpos_next_char(&bp);
+            break;
+        }
+        column++;
+    }
+    return column;
+}
+
 public TmpCursor
 buf_index_to_cursor_relative(const Buffer* buf, ListNode(DataSegment)* node,
                              Index index, Index full_index_of_node) {
@@ -153,12 +338,18 @@ buf_index_to_cursor_relative(const Buffer* buf, ListNode(DataSegment)* node,
         node = node->next;
     }
 
-    return (TmpCursor) {
-        .segment = node,
-        .index = index - len_sum,
+    TmpCursor cursor = {
+        .pos = {
+            .segment = node,
+            .index = index - len_sum,
+        },
         .revision = buf->cursor_revision,
         .full_backup_index = full_index_of_node + index,
+        .wanted_column = 0,
     };
+    cursor.wanted_column = cur_get_column(&cursor);
+
+    return cursor;
 }
 
 public TmpCursor
@@ -174,7 +365,7 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
     assert(buf);
     assert(cur);
     typedef ListNode(DataSegment) SegNode;
-    Index full_index_of_segment = cur->full_backup_index - cur->index;
+    Index full_index_of_segment = cur->full_backup_index - cur->pos.index;
 
     buf->cursor_revision++;
     buf->latest_change.where = cur->full_backup_index;
@@ -195,27 +386,28 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
         return;
     }
     DataSegment* latest_seg = buf->data.last_written_segment;
-    if (cur->index == 0 && cur->segment->prev != null) {
+    if (cur->pos.index == 0 && cur->pos.segment->prev != null) {
         // This is just for use in this function.  The cursor will be
         // replaced later in this function.
-        cur->segment = cur->segment->prev;
-        cur->index = cur->segment->obj.len;
-        full_index_of_segment -= cur->index;
+        cur->pos.segment = cur->pos.segment->prev;
+        cur->pos.index = cur->pos.segment->obj.len;
+        full_index_of_segment -= cur->pos.index;
     }
     void* to_write = null;
     // Are we appending the the same segment as last time?
     // Then we don't need to create a new segment!
-    if (&cur->segment->obj == latest_seg) {
-        to_write
-            = mem_alloc_at(&buf->mem, cur->segment->obj.start + cur->index, 1);
+    if (&cur->pos.segment->obj == latest_seg) {
+        to_write = mem_alloc_at(&buf->mem,
+                                cur->pos.segment->obj.start + cur->pos.index,
+                                1);
         if (to_write != null) {
-            cur->segment->obj.len++;
+            cur->pos.segment->obj.len++;
         }
     }
     // We could not append.  Let's create a new segment.
     if (to_write == null) {
         SegNode* new_node
-            = insert_char_in_segment(buf, ch, cur->segment, cur->index);
+            = insert_char_in_segment(buf, ch, cur->pos.segment, cur->pos.index);
         to_write = new_node->obj.start;
         latest_seg = &new_node->obj;
     }
@@ -224,7 +416,8 @@ buf_insert_char_at_cursor(Buffer* buf, char ch, TmpCursor* cur) {
     char* char_to_write = (char*)to_write;
     *char_to_write = ch;
     buf->data.last_written_segment = latest_seg;
-    *cur = buf_index_to_cursor_relative(buf, cur->segment, cur->index + 1,
+    *cur = buf_index_to_cursor_relative(buf, cur->pos.segment,
+                                        cur->pos.index + 1,
                                         full_index_of_segment);
 }
 
@@ -239,7 +432,7 @@ private void
 buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
     assert(buf);
     typedef ListNode(DataSegment) SegNode;
-    SegNode* node = first.segment;
+    SegNode* node = first.pos.segment;
 
     buf->cursor_revision++;
     buf->latest_change.where = first.full_backup_index;
@@ -250,9 +443,9 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
     for (;;) {
         SegNode* next_node = node->next;
         bool chars_to_left
-            = node == first.segment && first.index > 0;
+            = node == first.pos.segment && first.pos.index > 0;
         bool chars_to_right
-            = node == last.segment && last.index < node->obj.len - 1;
+            = node == last.pos.segment && last.pos.index < node->obj.len - 1;
         if (!chars_to_left && !chars_to_right) {
             list_remove(&buf->data.segments, node);
             node->obj.revision = buf->cursor_revision;
@@ -260,23 +453,23 @@ buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
             node->obj.revision = buf->cursor_revision;
             SegNode* right_node = mem_alloc(&buf->mem, SegNode);
             right_node->obj = (DataSegment) {
-                .start = node->obj.start + last.index + 1,
-                .len = node->obj.len - last.index - 1,
+                .start = node->obj.start + last.pos.index + 1,
+                .len = node->obj.len - last.pos.index - 1,
             };
-            node->obj.len = first.index;
+            node->obj.len = first.pos.index;
             list_insert(&buf->data.segments, right_node, node->next);
         } else {
             if (chars_to_left) {
                 node->obj.revision = buf->cursor_revision;
-                node->obj.len = first.index;
+                node->obj.len = first.pos.index;
             }
             if (chars_to_right) {
-                node->obj.start += last.index + 1;
-                node->obj.len -= last.index + 1;
+                node->obj.start += last.pos.index + 1;
+                node->obj.len -= last.pos.index + 1;
                 node->obj.revision = buf->cursor_revision;
             }
         }
-        if (node == last.segment) {
+        if (node == last.pos.segment) {
             break;
         }
         node = next_node;
@@ -299,68 +492,20 @@ public TmpCursor
 buf_cursor_at_start(const Buffer* buf) {
     assert(buf);
     return (TmpCursor) {
-        .segment = buf->data.segments.first,
-        .index = 0,
+        .pos = {
+            .segment = buf->data.segments.first,
+            .index = 0,
+        },
         .revision = buf->cursor_revision,
         .full_backup_index = 0,
+        .wanted_column = 0,
     };
-}
-
-public char
-cur_get_char(const TmpCursor* cur) {
-    assert(cur);
-    assert(cur->index < cur->segment->obj.len);
-    return cur->segment->obj.start[cur->index];
-}
-
-// Returns true if there is a char at the current position.
-public bool
-cur_has_char(const TmpCursor* cur) {
-    assert(cur);
-    return cur->segment && cur->segment->obj.len > cur->index;
-}
-
-// Updates the cursor to reference the next char.
-public void
-cur_next_char(TmpCursor* cur) {
-    assert(cur);
-    if (cur->segment) {
-        cur->index++;
-        cur->full_backup_index++;
-        // If this is last segment (segment->next is null) then we should
-        // go out of bounds to mark that we reached EOF.
-        if (cur->index >= cur->segment->obj.len) {
-            if (cur->segment->next) {
-                cur->segment = cur->segment->next;
-                cur->index = 0;
-            } else if (cur->index > cur->segment->obj.len) {
-                cur->index--;
-                cur->full_backup_index--;
-            }
-        }
-    }
-}
-
-// Same as cur_next_char but backwards.
-public void
-cur_prev_char(TmpCursor* cur) {
-    assert(cur);
-    if (cur->index > 0) {
-        cur->index--;
-        cur->full_backup_index--;
-    } else {
-        if (cur->segment && cur->segment->prev) {
-            cur->segment = cur->segment->prev;
-            cur->index = cur->segment->obj.len - 1;
-            cur->full_backup_index--;
-        }
-    }
 }
 
 // Two TmpCursor are equal if they point to the same segment
 // and have the same index.
 public bool
 cursor_eq(const TmpCursor* a, const TmpCursor* b) {
-    return a->segment == b->segment
-        && a->index == b->index;
+    return a->pos.segment == b->pos.segment
+        && a->pos.index == b->pos.index;
 }

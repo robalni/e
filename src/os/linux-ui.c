@@ -101,7 +101,7 @@ render_everything(const View* bv) {
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
-        char c = cur_get_char(&cur);
+        char c = bufpos_get_char(&cur.pos);
         if (line_start) {
             draw_rect(gc, start_col, row, 80, 1, bg);
             line_count++;
