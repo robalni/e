@@ -155,7 +155,7 @@ new_buffer_from_file(Memory mem, const char* filename) {
 public char
 bufpos_get_char(const BufPos* bp) {
     assert(bp);
-    assert(bp->index <= bp->segment->obj.len);
+    assert(bp->index < bp->segment->obj.len);
     return bp->segment->obj.start[bp->index];
 }
 
