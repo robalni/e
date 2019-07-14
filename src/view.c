@@ -12,6 +12,9 @@ struct View {
     // that.
     TmpCursor start_cursor;
 
+    // The number of columns that fit in this view.
+    u32 width;
+
     // The number of lines that fit in this view.
     u32 height;
 
@@ -33,6 +36,7 @@ new_view_into_buffer(Buffer* b) {
         .buffer = b,
         .offset_y = 0,
         .start_cursor = buf_cursor_at_start(b),
+        .width = 80,
         .height = 5,
         .cursor = buf_cursor_at_start(b),
     };

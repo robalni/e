@@ -21,14 +21,17 @@ typedef enum Key Key;
 
 enum EventType {
     EVENT_UNKNOWN = 0,
-    EVENT_CHAR = 1,
+    EVENT_CHAR    = 1,
     EVENT_KEYDOWN = 2,
-    EVENT_QUIT = 4,
-    EVENT_RENDER = 8,
+    EVENT_QUIT    = 4,
+    EVENT_RENDER  = 8,
+    EVENT_RESIZE  = 16,
 };
 struct Event {
     int type;
-    int keysym;
+    int keysym;  // EVENT_CHAR, EVENT_KEYDOWN
+    int width;   // EVENT_RESIZE
+    int height;  // EVENT_RESIZE
 };
 typedef struct Event Event;
 

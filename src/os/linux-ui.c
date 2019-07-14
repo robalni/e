@@ -98,10 +98,15 @@ render_everything(const View* bv) {
     int linenr = bv->offset_y + 1;
     int line_count = 0;
     bool line_start = true;
+    bool end_of_line = false;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
         char c = bufpos_get_char(&cur.pos);
+        int col_rel = col - start_col;
+        if (col_rel >= bv->width) {
+            end_of_line = true;
+        }
         if (line_start) {
             draw_rect(gc, start_col, row, 80, 1, bg);
             line_count++;
@@ -119,6 +124,9 @@ render_everything(const View* bv) {
             draw_vline(gc, col, row, 1, soft);
         }
         if (c == '\n') {
+            end_of_line = true;
+        }
+        if (end_of_line) {
             if (line_count >= bv->height) {
                 break;
             }
@@ -126,6 +134,7 @@ render_everything(const View* bv) {
             col = start_col + linenr_width;
             linenr++;
             line_start = true;
+            end_of_line = false;
             continue;
         }
         draw_char(c, gc, col, row, xcolor_fg);
@@ -201,7 +210,9 @@ read_input() {
                 win_buf = XCreatePixmap(disp, win, win_w, win_h, 24);
                 draw = XftDrawCreate(disp, win_buf, vis, colormap);
                 Event e;
-                e.type = EVENT_RENDER;
+                e.type = EVENT_RENDER | EVENT_RESIZE;
+                e.width = win_w;
+                e.height = win_h;
                 return e;
             }
         } break;

@@ -53,6 +53,13 @@ buffer_modified(const Buffer* buf, ViewList* views) {
     buffer_modified_update_cursor(buf, &view->start_cursor);
 }
 
+private void
+window_resized(ViewList* views, int width, int height) {
+    View* view = views->active_view;
+    view->width = width / fontw;
+    view->height = height / fonth;
+}
+
 // This function is directly called by the real main function found in
 // the os directory.
 public int
@@ -119,6 +126,9 @@ editor_main(int argc, char** argv) {
         }
         if (ev.type & EVENT_RENDER) {
             render_everything(&view);
+        }
+        if (ev.type & EVENT_RESIZE) {
+            window_resized(&views, ev.width, ev.height);
         }
     }
 
