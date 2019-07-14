@@ -97,6 +97,12 @@ editor_main(int argc, char** argv) {
             case KEY_DOWN:
                 cur_down_line(&view.cursor);
                 break;
+            case KEY_HOME:
+                cur_start_line(&view.cursor);
+                break;
+            case KEY_END:
+                cur_end_line(&view.cursor);
+                break;
             case KEY_BACKSPACE: {
                 TmpCursor where_to_remove = view.cursor;
                 cur_prev_char(&where_to_remove);

@@ -241,6 +241,18 @@ cur_prev_char(TmpCursor* cur) {
     }
 }
 
+public bool
+bufpos_is_start_buffer(const BufPos* bp) {
+    assert(bp);
+    return bp->segment == null || (bp->index == 0 && bp->segment->prev == null);
+}
+
+public bool
+bufpos_is_end_buffer(const BufPos* bp) {
+    assert(bp);
+    return bp->segment == null || bp->index >= bp->segment->obj.len;
+}
+
 public void
 cur_start_line(TmpCursor* cur) {
     for (;;) {
@@ -257,6 +269,22 @@ cur_start_line(TmpCursor* cur) {
 }
 
 public void
+cur_end_line(TmpCursor* cur) {
+    bool moved = false;
+    for (;;) {
+        char c = bufpos_get_char(&cur->pos);
+        if (c == '\n' || bufpos_is_end_buffer(&cur->pos)) {
+            break;
+        }
+        cur_next_char(cur);
+        moved = true;
+    }
+    if (!moved) {
+        cur->wanted_column = cur_get_column(cur);
+    }
+}
+
+public void
 cur_up_line(TmpCursor* cur) {
     u32 wanted_column = cur->wanted_column;
     cur_start_line(cur);
@@ -268,18 +296,6 @@ cur_up_line(TmpCursor* cur) {
         cur_next_char(cur);
     }
     cur->wanted_column = wanted_column;
-}
-
-public bool
-bufpos_is_start_buffer(const BufPos* bp) {
-    assert(bp);
-    return bp->segment == null || (bp->index == 0 && bp->segment->prev == null);
-}
-
-public bool
-bufpos_is_end_buffer(const BufPos* bp) {
-    assert(bp);
-    return bp->segment == null || bp->index >= bp->segment->obj.len;
 }
 
 public void
