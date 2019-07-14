@@ -272,6 +272,9 @@ public void
 cur_end_line(TmpCursor* cur) {
     bool moved = false;
     for (;;) {
+        if (bufpos_is_end_buffer(&cur->pos)) {
+            break;
+        }
         char c = bufpos_get_char(&cur->pos);
         if (c == '\n' || bufpos_is_end_buffer(&cur->pos)) {
             break;
@@ -313,7 +316,9 @@ cur_down_line(TmpCursor* cur) {
     }
     cur_next_char(cur);
     for (u32 i = 0;
-         i < wanted_column && bufpos_get_char(&cur->pos) != '\n';
+         i < wanted_column
+             && !bufpos_is_end_buffer(&cur->pos)
+             && bufpos_get_char(&cur->pos) != '\n';
          i++) {
         cur_next_char(cur);
     }
