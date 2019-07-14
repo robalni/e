@@ -118,6 +118,22 @@ editor_main(int argc, char** argv) {
                     buffer_modified(&buf, &views);
                 }
             } break;
+            case KEY_PAGEUP: {
+                u32 lines_to_scroll = view.height - 2;
+                for (u32 i = 0; i < lines_to_scroll; i++) {
+                    if (view.offset_y > 0) {
+                        cur_up_line(&view.start_cursor);
+                        view.offset_y--;
+                    }
+                }
+            } break;
+            case KEY_PAGEDOWN: {
+                u32 lines_to_scroll = view.height - 2;
+                for (u32 i = 0; i < lines_to_scroll; i++) {
+                    cur_down_line(&view.start_cursor);
+                    view.offset_y++;
+                }
+            } break;
             }
             render_everything(&view);  // TODO: Don't need to.
         }
