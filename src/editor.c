@@ -118,6 +118,12 @@ editor_main(int argc, char** argv) {
                     buffer_modified(&buf, &views);
                 }
             } break;
+            case KEY_DEL:
+                if (cur_has_char(&view.cursor)) {
+                    buf_remove_range(&buf, view.cursor, view.cursor);
+                    buffer_modified(&buf, &views);
+                }
+                break;
             case KEY_PAGEUP: {
                 u32 lines_to_scroll = view.height - 2;
                 for (u32 i = 0; i < lines_to_scroll; i++) {
