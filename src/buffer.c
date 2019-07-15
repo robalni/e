@@ -470,7 +470,7 @@ buf_insert_char(Buffer* buf, char ch, Index index) {
     buf_insert_char_at_cursor(buf, ch, &cur);
 }
 
-private void
+public void
 buf_remove_range(Buffer* buf, TmpCursor first, TmpCursor last) {
     assert(buf);
     typedef ListNode(DataSegment) SegNode;
