@@ -45,7 +45,7 @@ buffer_modified_update_cursor(const Buffer* buf, TmpCursor* cur) {
 
 private void
 buffer_modified(const Buffer* buf, ViewList* views) {
-    View* view = views->active_view;
+    View* view = get_active_view(views);
     buffer_modified_update_cursor(buf, &view->cursor);
     if (view->start_cursor.pos.segment == null) {
         view->start_cursor = buf_index_to_cursor(buf, 0);
@@ -55,7 +55,7 @@ buffer_modified(const Buffer* buf, ViewList* views) {
 
 private void
 window_resized(ViewList* views, int width, int height) {
-    View* view = views->active_view;
+    View* view = get_active_view(views);
     view->width = width / fontw;
     view->height = height / fonth;
 }
@@ -72,88 +72,97 @@ editor_main(int argc, char** argv) {
     BufferList buffers = {0};
     ViewList views = {0};
 
-    Buffer buf;
+    Buffer buf1;
     if (argc == 2) {
-        buf = new_buffer_from_file(new_mem_default(), argv[1]);
+        buf1 = new_buffer_from_file(new_mem_default(), argv[1]);
     } else {
-        buf = new_buffer_empty(new_mem_default());
+        buf1 = new_buffer_empty(new_mem_default());
     }
-    View view = new_view_into_buffer(&buf);
+    new_view_into_buffer(&views, &buf1);
 
-    set_active_view(&views, &view);
+    Buffer buf2 = new_buffer_empty(new_mem_default());
+    new_view_into_buffer(&views, &buf2);
+
+    View* view = get_active_view(&views);
+    Buffer* buf = view->buffer;
 
     // Main loop
     for (;;) {
         Event ev = read_input();
         if (ev.type & EVENT_CHAR) {
-            buf_insert_char_at_cursor(&buf, ev.keysym, &view.cursor);
-            buffer_modified(&buf, &views);
-            render_everything(&view);  // TODO: Don't need to.
+            buf_insert_char_at_cursor(buf, ev.ch, &view->cursor);
+            buffer_modified(buf, &views);
+            render_everything(view);  // TODO: Don't need to.
         }
         if (ev.type & EVENT_KEYDOWN) {
             switch (ev.keysym) {
             case KEY_RIGHT:
-                cur_next_char(&view.cursor);
+                cur_next_char(&view->cursor);
                 break;
             case KEY_LEFT:
-                cur_prev_char(&view.cursor);
+                cur_prev_char(&view->cursor);
                 break;
             case KEY_UP:
-                cur_up_line(&view.cursor);
+                cur_up_line(&view->cursor);
                 break;
             case KEY_DOWN:
-                cur_down_line(&view.cursor);
+                cur_down_line(&view->cursor);
                 break;
             case KEY_HOME:
-                cur_start_line(&view.cursor);
+                cur_start_line(&view->cursor);
                 break;
             case KEY_END:
-                cur_end_line(&view.cursor);
+                cur_end_line(&view->cursor);
                 break;
             case KEY_BACKSPACE: {
-                TmpCursor where_to_remove = view.cursor;
+                TmpCursor where_to_remove = view->cursor;
                 cur_prev_char(&where_to_remove);
-                if (!cursor_eq(&view.cursor, &where_to_remove)) {
-                    buf_remove_range(&buf, where_to_remove, where_to_remove);
-                    buffer_modified(&buf, &views);
+                if (!cursor_eq(&view->cursor, &where_to_remove)) {
+                    buf_remove_range(buf, where_to_remove, where_to_remove);
+                    buffer_modified(buf, &views);
                 }
             } break;
             case KEY_DEL:
-                if (cur_has_char(&view.cursor)) {
-                    buf_remove_range(&buf, view.cursor, view.cursor);
-                    buffer_modified(&buf, &views);
+                if (cur_has_char(&view->cursor)) {
+                    buf_remove_range(buf, view->cursor, view->cursor);
+                    buffer_modified(buf, &views);
                 }
                 break;
             case KEY_PAGEUP: {
-                u32 lines_to_scroll = view.height - 2;
-                if (view.height < 2) {
+                u32 lines_to_scroll = view->height - 2;
+                if (view->height < 2) {
                     lines_to_scroll = 1;
                 }
                 for (u32 i = 0; i < lines_to_scroll; i++) {
-                    if (view.offset_y > 0) {
-                        cur_up_line(&view.start_cursor);
-                        view.offset_y--;
+                    if (view->offset_y > 0) {
+                        cur_up_line(&view->start_cursor);
+                        view->offset_y--;
                     }
                 }
             } break;
             case KEY_PAGEDOWN: {
-                u32 lines_to_scroll = view.height - 2;
-                if (view.height < 2) {
+                u32 lines_to_scroll = view->height - 2;
+                if (view->height < 2) {
                     lines_to_scroll = 1;
                 }
                 for (u32 i = 0; i < lines_to_scroll; i++) {
-                    cur_down_line(&view.start_cursor);
-                    view.offset_y++;
+                    cur_down_line(&view->start_cursor);
+                    view->offset_y++;
                 }
             } break;
+            case KEY_ESCAPE:
+                set_next_view_active(&views);
+                view = get_active_view(&views);
+                buf = view->buffer;
+                break;
             }
-            render_everything(&view);  // TODO: Don't need to.
+            render_everything(view);  // TODO: Don't need to.
         }
         if (ev.type & EVENT_QUIT) {
             break;
         }
         if (ev.type & EVENT_RENDER) {
-            render_everything(&view);
+            render_everything(view);
         }
         if (ev.type & EVENT_RESIZE) {
             window_resized(&views, ev.width, ev.height);

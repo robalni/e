@@ -26,13 +26,15 @@ make_list_type(View);
 
 struct ViewList {
     List(View) views;
-    View* active_view;
+    ListNode(View)* active_view;
 };
 typedef struct ViewList ViewList;
 
-public View
-new_view_into_buffer(Buffer* b) {
-    return (View) {
+public void
+new_view_into_buffer(ViewList* vl, Buffer* b) {
+    ListNode(View)* node = mem_alloc(&b->mem, ListNode(View));
+    list_add_last(vl, node);
+    node->obj = (View) {
         .buffer = b,
         .offset_y = 0,
         .start_cursor = buf_cursor_at_start(b),
@@ -40,14 +42,24 @@ new_view_into_buffer(Buffer* b) {
         .height = 5,
         .cursor = buf_cursor_at_start(b),
     };
+    if (vl->active_view == null) {
+        vl->active_view = vl->views.first;
+    }
+}
+
+public View*
+get_active_view(const ViewList* vl) {
+    assert(vl);
+    return &vl->active_view->obj;
 }
 
 public void
-set_active_view(ViewList* vl, View* v) {
+set_next_view_active(ViewList* vl) {
     assert(vl);
-    assert(v);
-
-    vl->active_view = v;
+    vl->active_view = vl->active_view->next;
+    if (vl->active_view == null) {
+        vl->active_view = vl->views.first;
+    }
 }
 
 public TmpCursor

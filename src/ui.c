@@ -10,7 +10,6 @@ enum Key {
     KEY_DOWN,
     KEY_HOME,
     KEY_END,
-    KEY_RETURN,
     KEY_BACKSPACE,
     KEY_DEL,
     KEY_ESCAPE,
@@ -29,7 +28,8 @@ enum EventType {
 };
 struct Event {
     int type;
-    int keysym;  // EVENT_CHAR, EVENT_KEYDOWN
+    int keysym;  // EVENT_KEYDOWN
+    char ch;     // EVENT_CHAR
     int width;   // EVENT_RESIZE
     int height;  // EVENT_RESIZE
 };

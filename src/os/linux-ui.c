@@ -166,8 +166,6 @@ to_key_x(int k) {
         return KEY_HOME;
     case XK_End:
         return KEY_END;
-    case XK_Return:
-        return KEY_RETURN;
     case XK_BackSpace:
         return KEY_BACKSPACE;
     case XK_Delete:
@@ -193,12 +191,15 @@ read_input() {
             KeySym sym = XLookupKeysym(&event.xkey, event.xkey.state & 7);
             Event e;
             e.type = EVENT_KEYDOWN;
-            if (sym == XK_Return) {
-                sym = '\n';
-            }
-            if (key_is_printable(sym)) {
+            if (key_is_printable(sym) || sym == XK_Return) {
                 e.type |= EVENT_CHAR;
+                if (sym == XK_Return) {
+                    e.ch = '\n';
+                } else {
+                    e.ch = sym;
+                }
             }
+            sym = to_key_x(sym);
             e.keysym = to_key_x(sym);
             return e;
         } break;
