@@ -119,9 +119,6 @@ render_everything(const View* bv) {
             end_of_line = true;
         }
         if (end_of_line) {
-            if (line_count >= bv->height) {
-                break;
-            }
             {
                 char nr[11] = {0};
                 snprintf(nr, 10, "% 4d ", linenr);
@@ -131,6 +128,9 @@ render_everything(const View* bv) {
                     col++;
                     line_start = false;
                 }
+            }
+            if (line_count >= bv->height) {
+                break;
             }
             row++;
             col = start_col + linenr_width;
