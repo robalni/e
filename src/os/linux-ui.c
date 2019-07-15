@@ -101,6 +101,7 @@ render_everything(const View* bv) {
     bool end_of_line = false;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
+    draw_rect(gc, start_col, row, bv->width, 1, bg);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
         char c = bufpos_get_char(&cur.pos);
         int col_rel = col - start_col;
@@ -108,16 +109,7 @@ render_everything(const View* bv) {
             end_of_line = true;
         }
         if (line_start) {
-            draw_rect(gc, start_col, row, 80, 1, bg);
             line_count++;
-            char nr[11] = {0};
-            snprintf(nr, 10, "% 4d ", linenr);
-            col -= linenr_width;
-            for (size_t j = 0; j < 5; j++) {
-                draw_char(nr[j], gc, col, row, xcolor_soft);
-                col++;
-                line_start = false;
-            }
             XSetForeground(disp, gc, fg);
         }
         if (cursor_eq(&bv->cursor, &cur)) {
@@ -130,11 +122,22 @@ render_everything(const View* bv) {
             if (line_count >= bv->height) {
                 break;
             }
+            {
+                char nr[11] = {0};
+                snprintf(nr, 10, "% 4d ", linenr);
+                col = start_col;
+                for (size_t j = 0; j < 5; j++) {
+                    draw_char(nr[j], gc, col, row, xcolor_soft);
+                    col++;
+                    line_start = false;
+                }
+            }
             row++;
             col = start_col + linenr_width;
             linenr++;
             line_start = true;
             end_of_line = false;
+            draw_rect(gc, start_col, row, bv->width, 1, bg);
             continue;
         }
         draw_char(c, gc, col, row, xcolor_fg);
