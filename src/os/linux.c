@@ -18,7 +18,7 @@ os_open_file_r(const char* filename) {
 
 public File
 os_open_file_w(const char* filename) {
-    return (File) {open(filename, O_WRONLY | O_CREAT | O_TRUNC)};
+    return (File) {open(filename, O_WRONLY | O_CREAT | O_TRUNC, 00644)};
 }
 
 public size_t
