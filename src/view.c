@@ -20,6 +20,9 @@ struct View {
 
     // The cursor that determines where text will be inserted.
     TmpCursor cursor;
+
+    // Points to the connected view if this is a popup view.
+    struct View* popup;
 };
 typedef struct View View;
 make_list_type(View);
@@ -41,14 +44,9 @@ new_view_into_buffer(ViewList* vl, Buffer* b) {
         .width = 80,
         .height = 5,
         .cursor = buf_cursor_at_start(b),
+        .popup = null,
     };
     vl->active_view = node;
-}
-
-public View*
-get_active_view(const ViewList* vl) {
-    assert(vl);
-    return &vl->active_view->obj;
 }
 
 public void
@@ -58,6 +56,33 @@ set_next_view_active(ViewList* vl) {
     if (vl->active_view == null) {
         vl->active_view = vl->views.first;
     }
+}
+
+public void
+view_close_active(ViewList* vl, BufferList* bl) {
+    Buffer* this_buf = vl->active_view->obj.buffer;
+    ListNode(View)* view_to_close = vl->active_view;
+    set_next_view_active(vl);
+
+    int n_buffers_found = 0;
+    for (ListNode(View)* v = vl->views.first;
+         v;
+         v = v->next) {
+        if (v->obj.buffer == this_buf) {
+            n_buffers_found++;
+        }
+    }
+    assert(n_buffers_found > 0);
+    if (n_buffers_found == 1) {
+        remove_buffer(bl, list_obj_to_node(this_buf));
+    }
+    list_remove(&vl->views, view_to_close);
+}
+
+public View*
+get_active_view(const ViewList* vl) {
+    assert(vl);
+    return &vl->active_view->obj;
 }
 
 public TmpCursor

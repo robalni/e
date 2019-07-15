@@ -65,6 +65,12 @@ struct TmpCursor {
 };
 typedef struct TmpCursor TmpCursor;
 
+public void
+remove_buffer(BufferList* bl, ListNode(Buffer)* node) {
+    list_remove(&bl->buffers, node);
+    mem_free_all(&node->obj.mem);
+}
+
 private ListNode(Buffer)*
 add_buffer_to_list(BufferList* bl, Buffer* b) {
     ListNode(Buffer)* node = mem_alloc(&b->mem, ListNode(Buffer));
@@ -148,7 +154,7 @@ new_buffer_from_file(BufferList* bl, Memory mem, const char* filename) {
     SegNode* seg = mem_alloc(&mem, SegNode);
     list_add_last(&segs, seg);
 
-    File file = os_open_file(filename);
+    File file = os_open_file_r(filename);
     size_t file_size = os_file_size(file);
     seg->obj.start = mem_alloc_size(&mem, file_size);
     seg->obj.len = file_size;
@@ -544,4 +550,31 @@ public bool
 cursor_eq(const TmpCursor* a, const TmpCursor* b) {
     return a->pos.segment == b->pos.segment
         && a->pos.index == b->pos.index;
+}
+
+public void
+buf_write_file(const Buffer* buf, const char* filename) {
+    File f = os_open_file_w(filename);
+    for (ListNode(DataSegment)* seg = buf->data.segments.first;
+         seg;
+         seg = seg->next) {
+        os_file_write(f, seg->obj.start, seg->obj.len);
+    }
+    os_close_file(f);
+}
+
+public void
+buf_get_content(const Buffer* buf, char* to, usize to_len) {
+    usize written = 0;
+    for (ListNode(DataSegment)* seg = buf->data.segments.first;
+         seg;
+         seg = seg->next) {
+        usize i = 0;
+        while (written + 1 < to_len) {
+            to[written] = seg->obj.start[i];
+            i++;
+            written++;
+        }
+    }
+    to[written] = '\0';
 }

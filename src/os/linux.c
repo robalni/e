@@ -12,8 +12,13 @@ struct File {
 };
 
 public File
-os_open_file(const char* filename) {
+os_open_file_r(const char* filename) {
     return (File) {open(filename, O_RDONLY)};
+}
+
+public File
+os_open_file_w(const char* filename) {
+    return (File) {open(filename, O_WRONLY | O_CREAT | O_TRUNC)};
 }
 
 public size_t
@@ -24,8 +29,13 @@ os_file_size(File f) {
 }
 
 public void
-os_file_read_all(File f, char* buf, size_t buf_size) {
+os_file_read_all(File f, char* buf, usize buf_size) {
     read(f.fd, buf, buf_size);
+}
+
+public void
+os_file_write(File f, const char* buf, usize buf_size) {
+    write(f.fd, buf, buf_size);
 }
 
 public void

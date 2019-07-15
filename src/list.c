@@ -110,5 +110,7 @@ list_len(const void* list_void) {
     return count;
 }
 
-#define list_obj_to_node(obj)  \
-    (ListNode(typeof (obj))*)(obj - sizeof (void*) * 2)
+public void*
+list_obj_to_node(void* obj) {
+    return obj - sizeof (void*) * 2;
+}

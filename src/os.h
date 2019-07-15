@@ -8,13 +8,19 @@ struct File;
 typedef struct File File;
 
 public File
-os_open_file(const char* filename);
+os_open_file_r(const char* filename);
+
+public File
+os_open_file_w(const char* filename);
 
 public size_t
 os_file_size(File f);
 
 public void
-os_file_read_all(File f, char* buf, size_t buf_size);
+os_file_read_all(File f, char* buf, usize buf_size);
+
+public void
+os_file_write(File f, const char* buf, usize buf_size);
 
 public void
 os_close_file(File f);

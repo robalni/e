@@ -105,13 +105,13 @@ mem_alloc_size(Memory* mem, usize size) {
 
 public void
 mem_free_all(Memory* mem) {
+    mem->last_segment = null;
     SegHeader* header = last_segheader(mem);
     while (header) {
         SegHeader* prev = header->prev;
         os_unmap_memory(header, header->size);
         header = prev;
     }
-    mem->last_segment = null;
 }
 
 public usize

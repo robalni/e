@@ -87,8 +87,18 @@ editor_main(int argc, char** argv) {
     for (;;) {
         Event ev = read_input();
         if (ev.type & EVENT_CHAR) {
-            buf_insert_char_at_cursor(buf, ev.ch, &view->cursor);
-            buffer_modified(buf, &views);
+            if (view->popup && ev.ch == '\n') {
+                char filename[50];
+                buf_get_content(buf, filename, 50);
+
+                view_close_active(&views, &buffers);
+                view = get_active_view(&views);
+                buf = view->buffer;
+                buf_write_file(buf, filename);
+            } else {
+                buf_insert_char_at_cursor(buf, ev.ch, &view->cursor);
+                buffer_modified(buf, &views);
+            }
             render_everything(view);  // TODO: Don't need to.
         }
         if (ev.type & EVENT_KEYDOWN) {
@@ -149,8 +159,10 @@ editor_main(int argc, char** argv) {
             } break;
             case KEY_ESCAPE: {
                 Buffer* minibuf = new_buffer_empty(&buffers, new_mem_default());
+                View* old_view = view;
                 new_view_into_buffer(&views, minibuf);
                 view = get_active_view(&views);
+                view->popup = old_view;
                 buf = view->buffer;
             } break;
             }
