@@ -42,9 +42,7 @@ new_view_into_buffer(ViewList* vl, Buffer* b) {
         .height = 5,
         .cursor = buf_cursor_at_start(b),
     };
-    if (vl->active_view == null) {
-        vl->active_view = vl->views.first;
-    }
+    vl->active_view = node;
 }
 
 public View*

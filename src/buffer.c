@@ -38,6 +38,11 @@ struct Buffer {
 typedef struct Buffer Buffer;
 make_list_type(Buffer);
 
+struct BufferList {
+    List(Buffer) buffers;
+};
+typedef struct BufferList BufferList;
+
 // Only valid until the buffer data has been modified.  This is
 // because it points to a segment that can disappear or change.
 // It is normally used for iterating without changing anything.
@@ -60,7 +65,13 @@ struct TmpCursor {
 };
 typedef struct TmpCursor TmpCursor;
 
-typedef List(Buffer) BufferList;
+private ListNode(Buffer)*
+add_buffer_to_list(BufferList* bl, Buffer* b) {
+    ListNode(Buffer)* node = mem_alloc(&b->mem, ListNode(Buffer));
+    list_add_last(&bl->buffers, node);
+    node->obj = *b;
+    return node;
+}
 
 // Splits SEG in two at SEG_INDEX and puts the second one in NEW_SEG.
 // Returns NEW_SEG.
@@ -114,9 +125,9 @@ insert_char_in_segment(Buffer* buffer, char ch, ListNode(DataSegment)* node,
     return new_node;
 }
 
-public Buffer
-new_buffer_empty(Memory mem) {
-    return (Buffer) {
+public Buffer*
+new_buffer_empty(BufferList* bl, Memory mem) {
+    Buffer b = {
         .mem = mem,
         .data = (struct BufferData) {
             .segments = new_list_empty(DataSegment),
@@ -124,10 +135,12 @@ new_buffer_empty(Memory mem) {
         },
         .cursor_revision = 0,
     };
+    ListNode(Buffer)* node = add_buffer_to_list(bl, &b);
+    return &node->obj;
 }
 
-public Buffer
-new_buffer_from_file(Memory mem, const char* filename) {
+public Buffer*
+new_buffer_from_file(BufferList* bl, Memory mem, const char* filename) {
     assert(filename);
     typedef ListNode(DataSegment) SegNode;
 
@@ -142,7 +155,7 @@ new_buffer_from_file(Memory mem, const char* filename) {
     os_file_read_all(file, seg->obj.start, file_size);
     os_close_file(file);
 
-    return (Buffer) {
+    Buffer b = {
         .mem = mem,
         .data = (struct BufferData) {
             .segments = segs,
@@ -150,6 +163,8 @@ new_buffer_from_file(Memory mem, const char* filename) {
         },
         .cursor_revision = 0,
     };
+    ListNode(Buffer)* node = add_buffer_to_list(bl, &b);
+    return &node->obj;
 }
 
 public char

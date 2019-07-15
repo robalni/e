@@ -72,16 +72,13 @@ editor_main(int argc, char** argv) {
     BufferList buffers = {0};
     ViewList views = {0};
 
-    Buffer buf1;
+    Buffer* buf1;
     if (argc == 2) {
-        buf1 = new_buffer_from_file(new_mem_default(), argv[1]);
+        buf1 = new_buffer_from_file(&buffers, new_mem_default(), argv[1]);
     } else {
-        buf1 = new_buffer_empty(new_mem_default());
+        buf1 = new_buffer_empty(&buffers, new_mem_default());
     }
-    new_view_into_buffer(&views, &buf1);
-
-    Buffer buf2 = new_buffer_empty(new_mem_default());
-    new_view_into_buffer(&views, &buf2);
+    new_view_into_buffer(&views, buf1);
 
     View* view = get_active_view(&views);
     Buffer* buf = view->buffer;
@@ -150,11 +147,12 @@ editor_main(int argc, char** argv) {
                     view->offset_y++;
                 }
             } break;
-            case KEY_ESCAPE:
-                set_next_view_active(&views);
+            case KEY_ESCAPE: {
+                Buffer* minibuf = new_buffer_empty(&buffers, new_mem_default());
+                new_view_into_buffer(&views, minibuf);
                 view = get_active_view(&views);
                 buf = view->buffer;
-                break;
+            } break;
             }
             render_everything(view);  // TODO: Don't need to.
         }
