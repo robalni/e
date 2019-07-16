@@ -99,6 +99,7 @@ render_everything(const View* bv) {
     int line_count = 0;
     bool line_start = true;
     bool end_of_line = false;
+    bool line_is_cont = false;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
     draw_rect(gc, start_col, row, bv->width, 1, bg);
@@ -119,7 +120,7 @@ render_everything(const View* bv) {
             end_of_line = true;
         }
         if (end_of_line) {
-            {
+            if (!line_is_cont) {
                 char nr[11] = {0};
                 snprintf(nr, 10, "% 4d ", linenr);
                 col = start_col;
@@ -128,15 +129,16 @@ render_everything(const View* bv) {
                     col++;
                     line_start = false;
                 }
+                linenr++;
             }
             if (line_count >= bv->height) {
                 break;
             }
             row++;
             col = start_col + linenr_width;
-            linenr++;
             line_start = true;
             end_of_line = false;
+            line_is_cont = c != '\n';
             draw_rect(gc, start_col, row, bv->width, 1, bg);
             continue;
         }
