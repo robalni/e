@@ -105,6 +105,9 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
         bool hard_break = c == '\n';
         bool line_break = hard_break || col - start_col >= bv->width;
 
+        if (cursor_eq(&bv->cursor, &cur)) {
+            draw_vline(gc, col, row, 1, soft);
+        }
         if (hard_break) {
             char nr[11];
             snprintf(nr, 11, "% *d ", linenr_width, linenr);
@@ -123,9 +126,6 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
             col = start_col + left_margin;
 
             draw_rect(gc, start_col, row, bv->width, 1, bg);
-        }
-        if (cursor_eq(&bv->cursor, &cur)) {
-            draw_vline(gc, col, row, 1, soft);
         }
         if (c != '\n') {
             draw_char(c, gc, col, row, xcolor_fg);
