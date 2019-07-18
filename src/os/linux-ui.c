@@ -86,69 +86,67 @@ draw_vline(GC gc, int col, int row, int count, int color) {
 }
 
 public void
-render_everything(const View* bv) {
-    // The background.
-    draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
+render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
+    const u32 linenr_width = 4;         // 4 digits
+    const u32 left_margin = linenr_width + 1;
+    u32 row = start_row;                // Absolute row in window.
+    u32 col = start_col + left_margin;  // Absolute column in window.
+    u32 vis_lines = 0;                  // Number of visual lines printed.
+    u32 linenr = bv->offset_y + 1;
+    u32 line_started_at_row = row;
 
-    TmpCursor cur = view_cursor_at_start(bv);
-    int start_col = 0;
-    int row = 0;
-    int linenr_width = 5;
-    int col = start_col + linenr_width;
-    int linenr = bv->offset_y + 1;
-    int line_count = 0;
-    bool line_start = true;
-    bool end_of_line = false;
-    bool line_is_cont = false;
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
     draw_rect(gc, start_col, row, bv->width, 1, bg);
+
+    TmpCursor cur = view_cursor_at_start(bv);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
         char c = bufpos_get_char(&cur.pos);
-        int col_rel = col - start_col;
-        if (col_rel >= bv->width) {
-            end_of_line = true;
+        bool hard_break = c == '\n';
+        bool line_break = hard_break || col - start_col >= bv->width;
+
+        if (hard_break) {
+            char nr[11];
+            snprintf(nr, 11, "% *d ", linenr_width, linenr);
+            col = start_col;
+            for (size_t j = 0; j < 5; j++) {
+                draw_char(nr[j], gc, col, line_started_at_row, xcolor_soft);
+                col++;
+            }
         }
-        if (line_start) {
-            line_count++;
-            XSetForeground(disp, gc, fg);
+        if (line_break) {
+            vis_lines++;
+            if (vis_lines >= bv->height) {
+                break;
+            }
+            row++;
+            col = start_col + left_margin;
+
+            draw_rect(gc, start_col, row, bv->width, 1, bg);
         }
         if (cursor_eq(&bv->cursor, &cur)) {
             draw_vline(gc, col, row, 1, soft);
         }
-        if (c == '\n') {
-            end_of_line = true;
+        if (c != '\n') {
+            draw_char(c, gc, col, row, xcolor_fg);
+            col++;
         }
-        if (end_of_line) {
-            if (!line_is_cont) {
-                char nr[11] = {0};
-                snprintf(nr, 10, "% 4d ", linenr);
-                col = start_col;
-                for (size_t j = 0; j < 5; j++) {
-                    draw_char(nr[j], gc, col, row, xcolor_soft);
-                    col++;
-                    line_start = false;
-                }
-                linenr++;
-            }
-            if (line_count >= bv->height) {
-                break;
-            }
-            row++;
-            col = start_col + linenr_width;
-            line_start = true;
-            end_of_line = false;
-            line_is_cont = c != '\n';
-            draw_rect(gc, start_col, row, bv->width, 1, bg);
-            continue;
+        if (hard_break) {
+            linenr++;
+            line_started_at_row = row;
         }
-        draw_char(c, gc, col, row, xcolor_fg);
-        col++;
-        line_start = false;
     }
     if (cursor_eq(&cur, &bv->cursor)) {
         draw_vline(gc, col, row, 1, soft);
     }
+}
+
+public void
+render_everything(const View* bv) {
+    // The background.
+    draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
+
+    render_buffer_view(bv, 0, 0);
 
     XCopyArea(disp, win_buf, win, gc, 0, 0, win_w, win_h, 0, 0);
 }
