@@ -111,10 +111,10 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
         if (hard_break) {
             char nr[11];
             snprintf(nr, 11, "% *d ", linenr_width, linenr);
-            col = start_col;
+            u32 c = start_col;
             for (size_t j = 0; j < 5; j++) {
-                draw_char(nr[j], gc, col, line_started_at_row, xcolor_soft);
-                col++;
+                draw_char(nr[j], gc, c, line_started_at_row, xcolor_soft);
+                c++;
             }
         }
         if (line_break) {
