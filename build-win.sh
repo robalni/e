@@ -14,7 +14,7 @@ while [ $# -gt 0 ]; do
 done
 
 [ -z "$CXX" ] && CXX=c++
-CXXFLAGS="-Wall -Wextra -DWINDOWS $CXXFLAGS"
+CXXFLAGS="-Wall -Wextra -DWINDOWS -DHAVE_GUI $CXXFLAGS"
 LDFLAGS="-lgdi32 $LDFLAGS"
 
 if [ $debug ]; then

@@ -12,17 +12,8 @@ struct View {
     // that.
     TmpCursor start_cursor;
 
-    // The number of columns that fit in this view.
-    u32 width;
-
-    // The number of lines that fit in this view.
-    u32 height;
-
     // The cursor that determines where text will be inserted.
     TmpCursor cursor;
-
-    // Points to the connected view if this is a popup view.
-    struct View* popup;
 };
 typedef struct View View;
 make_list_type(View);
@@ -41,10 +32,7 @@ new_view_into_buffer(ViewList* vl, Buffer* b) {
         .buffer = b,
         .offset_y = 0,
         .start_cursor = buf_cursor_at_start(b),
-        .width = 80,
-        .height = 5,
         .cursor = buf_cursor_at_start(b),
-        .popup = null,
     };
     vl->active_view = node;
 }
@@ -82,6 +70,7 @@ view_close_active(ViewList* vl, BufferList* bl) {
 public View*
 get_active_view(const ViewList* vl) {
     assert(vl);
+    assert(vl->active_view);
     return &vl->active_view->obj;
 }
 

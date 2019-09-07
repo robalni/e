@@ -8,9 +8,9 @@ static int win_w, win_h;
 static Pixmap win_buf;
 static GC gc;
 static Atom delete_window_message;
-static XftFont *font;
-static XftDraw *draw;
-static Visual *vis;
+static XftFont* font;
+static XftDraw* draw;
+static Visual* vis;
 static Colormap colormap;
 
 static u64 bg = 0x222222;
@@ -20,7 +20,7 @@ static u8 fontw = 10;
 static u8 fonth = 20;
 
 public Result
-init_gui() {
+gui_init() {
     disp = XOpenDisplay(null);
     if (!disp) {
         ERROR("Could not open display");
@@ -66,7 +66,7 @@ draw_char(char c, GC gc, int col, int row,
     XftColor xft_color = {0, color};
     int x = col * fontw + 1;
     int y = row * fonth + fonth * 0.75;
-    XftDrawString8(draw, &xft_color, font, x, y, (FcChar8 *)&c, 1);
+    XftDrawString8(draw, &xft_color, font, x, y, (FcChar8*)&c, 1);
 }
 
 private void
@@ -86,7 +86,18 @@ draw_vline(GC gc, int col, int row, int count, int color) {
 }
 
 public void
-render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
+render_save_popup(GC gc) {
+    XftColor xft_color = {0, xcolor(fg)};
+    XftColor xft_bg_color = {0, xcolor(bg)};
+    const char* label = "Hello";
+    int x = 80, y = 80;
+    draw_rect(gc, 7, 3, 20, 3, bg);
+    XftDrawString8(draw, &xft_color, font, x, y, (FcChar8*)label, 5);
+}
+
+public void
+render_buffer_view(const View* bv, u32 start_col, u32 start_row,
+                   u32 width, u32 height) {
     const u32 linenr_width = 4;         // 4 digits
     const u32 left_margin = linenr_width + 1;
     u32 row = start_row;                // Absolute row in window.
@@ -97,13 +108,13 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
 
     XRenderColor xcolor_soft = xcolor(soft);
     XRenderColor xcolor_fg = xcolor(fg);
-    draw_rect(gc, start_col, row, bv->width, 1, bg);
+    draw_rect(gc, start_col, row, width, 1, bg);
 
     TmpCursor cur = view_cursor_at_start(bv);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
         char c = bufpos_get_char(&cur.pos);
         bool hard_break = c == '\n';
-        bool line_break = hard_break || col - start_col >= bv->width;
+        bool line_break = hard_break || col - start_col >= width;
 
         if (cursor_eq(&bv->cursor, &cur)) {
             draw_vline(gc, col, row, 1, soft);
@@ -119,13 +130,13 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
         }
         if (line_break) {
             vis_lines++;
-            if (vis_lines >= bv->height) {
+            if (vis_lines >= height) {
                 break;
             }
             row++;
             col = start_col + left_margin;
 
-            draw_rect(gc, start_col, row, bv->width, 1, bg);
+            draw_rect(gc, start_col, row, width, 1, bg);
         }
         if (c != '\n') {
             draw_char(c, gc, col, row, xcolor_fg);
@@ -142,11 +153,22 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row) {
 }
 
 public void
-render_everything(const View* bv) {
+render_edit_frame(const ViewList* vl) {
+    for (const ListNode(View)* v = vl->views.first; v; v = v->next) {
+        render_buffer_view(&v->obj, 0, 0, 50, 20);
+    }
+}
+
+public void
+render_save_frame() {
+}
+
+public void
+gui_render_everything(const FrameList* wl) {
     // The background.
     draw_rect(gc, 0, 0, win_w / fontw + 1, win_h / fonth + 1, 0xff111111);
 
-    render_buffer_view(bv, 0, 0);
+    render_frame(&wl->frames.first->obj);
 
     XCopyArea(disp, win_buf, win, gc, 0, 0, win_w, win_h, 0, 0);
 }
@@ -155,34 +177,34 @@ private int
 to_key_x(int k) {
     switch (k) {
     case XK_Up:
-        return KEY_UP;
+        return EKEY_UP;
     case XK_Left:
-        return KEY_LEFT;
+        return EKEY_LEFT;
     case XK_Right:
-        return KEY_RIGHT;
+        return EKEY_RIGHT;
     case XK_Down:
-        return KEY_DOWN;
+        return EKEY_DOWN;
     case XK_Home:
-        return KEY_HOME;
+        return EKEY_HOME;
     case XK_End:
-        return KEY_END;
+        return EKEY_END;
     case XK_BackSpace:
-        return KEY_BACKSPACE;
+        return EKEY_BACKSPACE;
     case XK_Delete:
-        return KEY_DEL;
+        return EKEY_DEL;
     case XK_Escape:
-        return KEY_ESCAPE;
+        return EKEY_ESCAPE;
     case XK_Page_Down:
-        return KEY_PAGEDOWN;
+        return EKEY_PAGEDOWN;
     case XK_Page_Up:
-        return KEY_PAGEUP;
+        return EKEY_PAGEUP;
     default:
         return k;
     }
 }
 
 public Event
-read_input() {
+gui_read_input() {
     XEvent event;
     for (;;) {
         XNextEvent(disp, &event);

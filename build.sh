@@ -26,10 +26,10 @@ else
 fi
 
 if [ ! $nogui ]; then
-    CFLAGS="`pkg-config --cflags xft` -DHAVE_X11 $CFLAGS"
+    CFLAGS="`pkg-config --cflags xft` -DHAVE_X11 -DHAVE_GUI $CFLAGS"
     LDFLAGS="`pkg-config --libs x11` `pkg-config --libs xft` $LDFLAGS"
 fi
 
-cmd="$CC $CFLAGS src/editor.c $LDFLAGS -o e"
+cmd="$CC $CFLAGS src/main.c $LDFLAGS -o e"
 echo $cmd
 $cmd

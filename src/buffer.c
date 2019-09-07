@@ -557,7 +557,8 @@ buf_write_file(const Buffer* buf, const char* filename) {
     File f = os_open_file_w(filename);
     for (ListNode(DataSegment)* seg = buf->data.segments.first;
          seg;
-         seg = seg->next) {
+         seg = seg->next)
+    {
         os_file_write(f, seg->obj.start, seg->obj.len);
     }
     os_close_file(f);
@@ -568,7 +569,8 @@ buf_get_content(const Buffer* buf, char* to, usize to_len) {
     usize written = 0;
     for (ListNode(DataSegment)* seg = buf->data.segments.first;
          seg;
-         seg = seg->next) {
+         seg = seg->next)
+    {
         usize i = 0;
         while (written + 1 < to_len) {
             to[written] = seg->obj.start[i];
