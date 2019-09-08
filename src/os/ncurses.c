@@ -6,6 +6,7 @@ tui_init() {
     cbreak();
     noecho();
     keypad(stdscr, true);
+    raw();
     return true;
 }
 
@@ -45,11 +46,18 @@ to_key(int k) {
 public Event
 tui_read_input() {
     int ch = getch();
-    return (Event) {
-        .type = EVENT_KEYDOWN | EVENT_CHAR,
-        .ch = to_key(ch),
-        .keysym = to_key(ch),
-    };
+    if (key_is_printable(ch)) {
+        return (Event) {
+            .type = EVENT_KEYDOWN | EVENT_CHAR,
+            .ch = to_key(ch),
+            .keysym = to_key(ch),
+        };
+    } else {
+        return (Event) {
+            .type = EVENT_KEYDOWN,
+            .keysym = to_key(ch),
+        };
+    }
 }
 
 public void
@@ -62,6 +70,8 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row,
     u32 vis_lines = 0;                  // Number of visual lines printed.
     u32 linenr = bv->offset_y + 1;
     u32 line_started_at_row = row;
+    int cursor_row = 0;
+    int cursor_col = 0;
 
     TmpCursor cur = view_cursor_at_start(bv);
     for (; cur_has_char(&cur); cur_next_char(&cur)) {
@@ -71,6 +81,8 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row,
 
         if (cursor_eq(&bv->cursor, &cur)) {
             //draw_vline(gc, col, row, 1, soft);
+            cursor_col = col;
+            cursor_row = row;
         }
         if (hard_break) {
             char nr[11];
@@ -103,6 +115,7 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row,
     if (cursor_eq(&cur, &bv->cursor)) {
         //draw_vline(gc, col, row, 1, soft);
     }
+    move(cursor_row, cursor_col);
 }
 
 #if 0
