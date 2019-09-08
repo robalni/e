@@ -80,7 +80,6 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row,
         bool line_break = hard_break || col - start_col >= width;
 
         if (cursor_eq(&bv->cursor, &cur)) {
-            //draw_vline(gc, col, row, 1, soft);
             cursor_col = col;
             cursor_row = row;
         }
@@ -100,8 +99,6 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row,
             }
             row++;
             col = start_col + left_margin;
-
-            //draw_rect(gc, start_col, row, width, 1, bg);
         }
         if (c != '\n') {
             mvaddch(row, col, c);
@@ -113,7 +110,8 @@ render_buffer_view(const View* bv, u32 start_col, u32 start_row,
         }
     }
     if (cursor_eq(&cur, &bv->cursor)) {
-        //draw_vline(gc, col, row, 1, soft);
+        cursor_col = col;
+        cursor_row = row;
     }
     move(cursor_row, cursor_col);
 }
