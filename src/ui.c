@@ -46,9 +46,6 @@ public void
 render_buffer_view(const struct View* bv, u32 start_col, u32 start_row,
                    u32 width, u32 height);
 
-public void
-render_save_popup();
-
 struct Frame;
 
 public void
@@ -81,33 +78,36 @@ tui_read_input();
 
 public Result
 ui_init(bool gui) {
-    if (gui) {
 #ifdef HAVE_GUI
+    if (gui) {
         return gui_init();
-#endif
-    } else {
-        return tui_init();
     }
+#else
+    (void)gui;
+#endif
+    return tui_init();
 }
 
 public void
 ui_render_everything(bool gui, const struct FrameList* frames) {
-    if (gui) {
 #ifdef HAVE_GUI
+    if (gui) {
         return gui_render_everything(frames);
-#endif
-    } else {
-        return tui_render_everything(frames);
     }
+#else
+    (void)gui;
+#endif
+    return tui_render_everything(frames);
 }
 
 public Event
 ui_read_input(bool gui) {
-    if (gui) {
 #ifdef HAVE_GUI
+    if (gui) {
         return gui_read_input();
-#endif
-    } else {
-        return tui_read_input();
     }
+#else
+    (void)gui;
+#endif
+    return tui_read_input();
 }

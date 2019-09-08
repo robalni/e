@@ -30,7 +30,9 @@ typedef struct FrameList FrameList;
 public void
 set_bg_frame(FrameList* wl, Frame w) {
     wl->bg_frame.obj = w;
-    list_remove(wl, wl->frames.first);
+    if (list_len(wl) > 0) {
+        list_remove(wl, wl->frames.first);
+    }
     list_add_last(wl, &wl->bg_frame);
 }
 

@@ -16,10 +16,10 @@
 #include "view.c"
 #include "frame.c"
 
+#ifdef HAVE_X11
+#  include "os/xlib.c"
+#endif
 #ifdef LINUX
-#  ifdef HAVE_X11
-#    include "os/linux-ui.c"
-#  endif
 #  include "os/ncurses.c"
 #endif
 #ifdef WINDOWS
@@ -161,7 +161,6 @@ update_edit_frame(FrameList* wl, Event* ev) {
         } break;
         case EKEY_ESCAPE: {
             Buffer* minibuf = new_buffer_empty(&buffers, new_mem_default());
-            View* old_view = view;
             new_view_into_buffer(views, minibuf);
             view = get_active_view(views);
             buf = view->buffer;
@@ -174,7 +173,7 @@ public void
 render_frame(const Frame* w) {
     switch (w->type) {
     case FRAME_EDIT:
-        //render_edit_frame(&w->edit.vl);
+        render_edit_frame(&w->edit.vl);
         break;
     case FRAME_SAVE:
         //render_save_frame(w->save.buf);
@@ -218,7 +217,7 @@ editor_main(int argc, char** argv) {
             .bl = {0},
         },
     };
-    set_fg_frame(&frames, edit_frame_storage);
+    set_bg_frame(&frames, edit_frame_storage);
     struct EditFrame* edit_frame = &get_active_frame(&frames)->edit;
     BufferList* buffers = &edit_frame->bl;
     ViewList* views = &edit_frame->vl;
