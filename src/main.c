@@ -77,24 +77,6 @@ update_save_frame(FrameList* wl, const Event* ev) {
         buf_write_file(buf, filename);
     } break;
     }
-
-    // TODO: The rest of this function is old code, remove.
-#if 0
-    w = get_active_frame(wl);
-    frame = &w->save;
-    views = &frame->views;
-    if (ev->type & EVENT_CHAR) {
-        if (ev->ch == '\n') {
-            char filename[50];
-            const Buffer* buf = frame->buf;
-            buf_get_content(buf, filename, sizeof filename);
-
-            view_close_active(views, buffers);
-            buf = get_active-view(views)->buffer;
-            buf_write_file(buf, filename);
-        }
-    }
-#endif
 }
 
 private void
@@ -160,10 +142,8 @@ update_edit_frame(FrameList* wl, Event* ev) {
             }
         } break;
         case EKEY_ESCAPE: {
-            Buffer* minibuf = new_buffer_empty(&buffers, new_mem_default());
+            Buffer* minibuf = new_buffer_empty(buffers, new_mem_default());
             new_view_into_buffer(views, minibuf);
-            view = get_active_view(views);
-            buf = view->buffer;
         } break;
         }
     }
