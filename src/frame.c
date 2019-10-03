@@ -14,6 +14,7 @@ struct Frame {
             const Buffer* buf;
             struct EditFrame* edit_frame;
             Textbox textbox;
+            Memory mem;
         } save;
     };
 };

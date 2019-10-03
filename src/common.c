@@ -15,7 +15,7 @@ typedef   size_t usize;
 typedef  ssize_t isize;
 
 // Should be used to mark whether a function is meant to be used in
-// other files.  This can be enforced by scripts.
+// other files.  This can be checked by scripts.
 #define public static
 #define private static
 

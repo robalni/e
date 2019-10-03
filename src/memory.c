@@ -87,7 +87,7 @@ mem_alloc_at(Memory* mem, void* addr, usize size) {
     return new_mem;
 }
 
-#define mem_alloc(mem, T) mem_alloc_size(mem, sizeof (T))
+#define mem_alloc(mem, T) ((T*)mem_alloc_size(mem, sizeof (T)))
 
 public void*
 mem_alloc_size(Memory* mem, usize size) {

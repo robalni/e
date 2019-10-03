@@ -131,6 +131,9 @@ insert_char_in_segment(Buffer* buffer, char ch, ListNode(DataSegment)* node,
     return new_node;
 }
 
+// If bl is null, don't add it to any list, just allocate and put it
+// in memory. That is useful if this buffer should never be switched
+// to another buffer.
 public Buffer*
 new_buffer_empty(BufferList* bl, Memory mem) {
     Buffer b = {
@@ -141,8 +144,15 @@ new_buffer_empty(BufferList* bl, Memory mem) {
         },
         .cursor_revision = 0,
     };
-    ListNode(Buffer)* node = add_buffer_to_list(bl, &b);
-    return &node->obj;
+    ListNode(Buffer)* node = null;
+    if (bl) {
+        ListNode(Buffer)* node = add_buffer_to_list(bl, &b);
+        return &node->obj;
+    } else {
+        Buffer* bp = mem_alloc(&b.mem, Buffer);
+        *bp = b;
+        return bp;
+    }
 }
 
 public Buffer*

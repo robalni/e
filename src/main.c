@@ -27,7 +27,9 @@
 #endif
 
 
-private void
+// Part of the algorithm in buffer_modified. Can also be called if a
+// buffer has no views but still cursors that need to be updated.
+public void
 buffer_modified_update_cursor(const Buffer* buf, TmpCursor* cur) {
     if (cur->pos.segment) {
         const struct LatestChange* lc = &buf->latest_change;
@@ -48,7 +50,10 @@ buffer_modified_update_cursor(const Buffer* buf, TmpCursor* cur) {
     }
 }
 
-private void
+// Must be called after the buffer has been changed in a way so that
+// cursors must be recalculated and before any cursors are used after
+// that.
+public void
 buffer_modified(const Buffer* buf, ViewList* views) {
     View* view = get_active_view(views);
     buffer_modified_update_cursor(buf, &view->cursor);
@@ -62,25 +67,24 @@ private void
 update_save_frame(FrameList* wl, const Event* ev) {
     Frame* w = get_active_frame(wl);
     struct SaveFrame* frame = &w->save;
-    ViewList* views = &frame->edit_frame->vl;
-    BufferList* buffers = &frame->edit_frame->bl;
+    Textbox* tb = &frame->textbox;
+    Memory* mem = &frame->mem;
 
-    TextboxEvent te = update_textbox(ev);
+    TextboxEvent te = update_textbox(tb, ev, mem);
     switch (te.type) {
+    case TEXTBOX_NONE:
+        break;
     case TEXTBOX_SUBMIT: {
         char filename[50];
         const Buffer* buf = frame->buf;
-        buf_get_content(buf, filename, sizeof filename);
-
-        view_close_active(views, buffers);
-        buf = get_active_view(views)->buffer;
+        minibuf_get_content(&tb->buf, filename, sizeof filename);
         buf_write_file(buf, filename);
     } break;
     }
 }
 
 private void
-update_edit_frame(FrameList* wl, Event* ev) {
+update_edit_frame(FrameList* wl, const Event* ev) {
     Frame* w = get_active_frame(wl);
     struct EditFrame* frame = &w->edit;
     ViewList* views = &frame->vl;
@@ -142,8 +146,16 @@ update_edit_frame(FrameList* wl, Event* ev) {
             }
         } break;
         case EKEY_ESCAPE: {
-            Buffer* minibuf = new_buffer_empty(buffers, new_mem_default());
-            new_view_into_buffer(views, minibuf);
+            Frame save_frame = {
+                .type = FRAME_SAVE,
+                .save = {
+                    .buf = buf,
+                    .edit_frame = frame,
+                    .textbox = {0},
+                    .mem = new_mem_default(),
+                },
+            };
+            set_fg_frame(wl, save_frame);
         } break;
         }
     }
@@ -163,7 +175,7 @@ render_frame(const Frame* w) {
 
 private void
 update_current_frame(FrameList* wl, const Event* ev) {
-    Frame* w = &wl->frames.first->obj;
+    Frame* w = get_active_frame(wl);
     switch (w->type) {
     case FRAME_EDIT:
         update_edit_frame(wl, ev);
