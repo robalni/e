@@ -582,7 +582,7 @@ buf_get_content(const Buffer* buf, char* to, usize to_len) {
          seg = seg->next)
     {
         usize i = 0;
-        while (written + 1 < to_len) {
+        while (written + 1 < to_len && i < seg->obj.len) {
             to[written] = seg->obj.start[i];
             i++;
             written++;

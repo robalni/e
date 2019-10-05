@@ -1,14 +1,10 @@
-#include "memory.hpp"
-#include "common.hpp"
-
-
-int
+public int
 test_memory_alloc() {
-    MemoryManager mem = MemoryManager::new_default();
+    Memory mem = new_mem_default();
     u32 n1 = 2981, n2 = 2190, n3 = 1337;
-    u8* data1 = static_cast<u8*>(mem.alloc(n1));
-    u8* data2 = static_cast<u8*>(mem.alloc(n2));
-    u8* data3 = static_cast<u8*>(mem.alloc(n3));
+    u8* data1 = (u8*)mem_alloc_size(&mem, n1);
+    u8* data2 = (u8*)mem_alloc_size(&mem, n2);
+    u8* data3 = (u8*)mem_alloc_size(&mem, n3);
 
     assert(data1 != null);
     assert(data2 != null);
@@ -34,21 +30,21 @@ test_memory_alloc() {
         assert(data3[i] == 'z');
     }
 
-    assert(mem.count_segments() == 2);
-    mem.free_all();
-    assert(mem.count_segments() == 0);
+    assert(mem_count_segments(&mem) == 2);
+    mem_free_all(&mem);
+    assert(mem_count_segments(&mem) == 0);
 
     return 0;
 }
 
-int
+public int
 test_memory_append() {
-    MemoryManager mem = MemoryManager::new_default();
+    Memory mem = new_mem_default();
 
     u8* data_start = null;
     u32 i = 0;
     u8* next_addr = null;
-    while ((next_addr = static_cast<u8*>(mem.alloc_at(next_addr, 1)))) {
+    while ((next_addr = (u8*)mem_alloc_at(&mem, next_addr, 1))) {
         if (!data_start) {
             data_start = next_addr;
         }
@@ -57,7 +53,7 @@ test_memory_append() {
         next_addr++;
     }
 
-    assert(mem.count_segments() == 1);
+    assert(mem_count_segments(&mem) == 1);
     assert(i > 5);
 
     for (u32 j = 0; j < i; j++) {

@@ -26,6 +26,8 @@ typedef struct ViewList ViewList;
 
 public void
 new_view_into_buffer(ViewList* vl, Buffer* b) {
+    assert(vl);
+    assert(b);
     ListNode(View)* node = mem_alloc(&b->mem, ListNode(View));
     list_add_last(vl, node);
     node->obj = (View) {

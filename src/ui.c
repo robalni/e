@@ -67,6 +67,8 @@ gui_read_input();
 
 #endif
 
+#ifdef HAVE_TUI
+
 public Result
 tui_init();
 
@@ -76,16 +78,18 @@ tui_render_everything(const struct FrameList*);
 public Event
 tui_read_input();
 
+#endif
+
 public Result
 ui_init(bool gui) {
 #ifdef HAVE_GUI
     if (gui) {
         return gui_init();
     }
-#else
-    (void)gui;
 #endif
+#ifdef HAVE_TUI
     return tui_init();
+#endif
 }
 
 public void
@@ -94,10 +98,10 @@ ui_render_everything(bool gui, const struct FrameList* frames) {
     if (gui) {
         return gui_render_everything(frames);
     }
-#else
-    (void)gui;
 #endif
+#ifdef HAVE_TUI
     return tui_render_everything(frames);
+#endif
 }
 
 public Event
@@ -106,8 +110,8 @@ ui_read_input(bool gui) {
     if (gui) {
         return gui_read_input();
     }
-#else
-    (void)gui;
 #endif
+#ifdef HAVE_TUI
     return tui_read_input();
+#endif
 }

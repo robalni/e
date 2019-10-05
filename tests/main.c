@@ -1,14 +1,17 @@
-#include "common.hpp"
+#include "test-buffer.c"
+#include "test-list.c"
+#include "test-memory.c"
+#include "test-view.c"
 
 #include <string.h>
 #include <stdio.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-extern "C" void
+void
 exit(int);
 
-using TestFn = int (*)();
+typedef int (*TestFn)();
 
 static inline int
 run_test(TestFn fn) {
@@ -56,7 +59,7 @@ print_summary(int n_failed) {
 }
 
 int
-test_main(int, char**) {
+test_main(int argc, char** argv) {
     int n_failed = 0;
     puts("");
 

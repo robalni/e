@@ -16,7 +16,7 @@ while [ $# -gt 0 ]; do
 done
 
 [ -z "$CC" ] && CC=cc
-CFLAGS="-Wall -Wextra -DLINUX $CFLAGS"
+CFLAGS="-Wall -Wextra -DLINUX -DHAVE_NCURSES -DHAVE_TUI $CFLAGS"
 LDFLAGS="-lncurses $LDFLAGS"
 
 if [ $debug ]; then

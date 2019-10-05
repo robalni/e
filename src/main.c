@@ -19,7 +19,7 @@
 #ifdef HAVE_X11
 #  include "os/xlib.c"
 #endif
-#ifdef LINUX
+#ifdef HAVE_NCURSES
 #  include "os/ncurses.c"
 #endif
 #ifdef WINDOWS
@@ -163,6 +163,7 @@ update_edit_frame(FrameList* wl, const Event* ev) {
 
 public void
 render_frame(const Frame* w) {
+#if defined(GUI) || defined(TUI)
     switch (w->type) {
     case FRAME_EDIT:
         render_edit_frame(&w->edit.vl);
@@ -171,6 +172,7 @@ render_frame(const Frame* w) {
         //render_save_frame(w->save.buf);
         break;
     }
+#endif
 }
 
 private void
@@ -242,3 +244,7 @@ editor_main(int argc, char** argv) {
 
     return 0;
 }
+
+#ifdef TEST
+#  include "../tests/main.c"
+#endif

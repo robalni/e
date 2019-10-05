@@ -2,10 +2,10 @@
 
 # Usage: ./test.sh
 
-[ -z "$CXX" ] && CXX=c++
+[ -z "$CXX" ] && CXX=cc
 CXXFLAGS="-Wall -Wextra -g -Isrc -DENTRY=test_main -DTEST -DLINUX $CXXFLAGS"
 LDFLAGS=""
 
-cmd="$CXX $CXXFLAGS all.cpp $LDFLAGS -o test"
+cmd="$CXX $CXXFLAGS src/main.c $LDFLAGS -o test"
 echo $cmd
 $cmd && ./test
