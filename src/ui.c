@@ -3,8 +3,10 @@
 // the os directory.
 
 enum Key {
-    EKEY_UNKNOWN,
-    EKEY_UP,
+    EKEY_UNKNOWN = 0,
+    // Printable keys have their own lower case value.
+    // E.g. 'a' means key A key.
+    EKEY_UP = 256,
     EKEY_RIGHT,
     EKEY_LEFT,
     EKEY_DOWN,

@@ -27,7 +27,6 @@ to_key(int k) {
     case KEY_BACKSPACE:
         return EKEY_BACKSPACE;
     case KEY_ENTER:
-    case '\n':
         return '\n';
     case KEY_DOWN:
         return EKEY_DOWN;
@@ -54,7 +53,7 @@ tui_read_input() {
     if (key_is_printable(ch)) {
         return (Event) {
             .type = EVENT_KEYDOWN | EVENT_CHAR,
-            .ch = to_key(ch),
+            .ch = ch,
             .keysym = to_key(ch),
         };
     } else {
