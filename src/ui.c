@@ -5,7 +5,7 @@
 enum Key {
     EKEY_UNKNOWN = 0,
     // Printable keys have their own lower case value.
-    // E.g. 'a' means key A key.
+    // E.g. 'a' means the A key.
     EKEY_UP = 256,
     EKEY_RIGHT,
     EKEY_LEFT,
