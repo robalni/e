@@ -79,6 +79,7 @@ update_save_frame(FrameList* wl, const Event* ev) {
         const Buffer* buf = frame->buf;
         minibuf_get_content(&tb->buf, filename, sizeof filename);
         buf_write_file(buf, filename);
+        close_fg_frame(wl);
     } break;
     }
 }
