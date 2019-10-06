@@ -163,7 +163,7 @@ update_edit_frame(FrameList* wl, const Event* ev) {
 
 public void
 render_frame(const Frame* w) {
-#if defined(GUI) || defined(TUI)
+#if defined(HAVE_GUI) || defined(HAVE_TUI)
     switch (w->type) {
     case FRAME_EDIT:
         render_edit_frame(&w->edit.vl);
@@ -232,6 +232,9 @@ editor_main(int argc, char** argv) {
         ui_render_everything(use_gui, &frames);  // TODO: Don't need to.
 
         if (ev.type & EVENT_QUIT) {
+            break;
+        }
+        if (ev.type & EVENT_KEYDOWN && ev.keysym == 'q') {
             break;
         }
         if (ev.type & EVENT_RENDER) {
