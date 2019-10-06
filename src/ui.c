@@ -60,6 +60,9 @@ public Result
 gui_init();
 
 public void
+gui_cleanup();
+
+public void
 gui_render_everything(const struct FrameList*);
 
 public Event
@@ -71,6 +74,9 @@ gui_read_input();
 
 public Result
 tui_init();
+
+public void
+tui_cleanup();
 
 public void
 tui_render_everything(const struct FrameList*);
@@ -89,6 +95,18 @@ ui_init(bool gui) {
 #endif
 #ifdef HAVE_TUI
     return tui_init();
+#endif
+}
+
+public void
+ui_cleanup(bool gui) {
+#ifdef HAVE_GUI
+    if (gui) {
+        return gui_cleanup();
+    }
+#endif
+#ifdef HAVE_TUI
+    return tui_cleanup();
 #endif
 }
 

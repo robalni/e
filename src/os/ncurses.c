@@ -10,6 +10,11 @@ tui_init() {
     return true;
 }
 
+public void
+tui_cleanup() {
+    endwin();
+}
+
 private int
 to_key(int k) {
     switch (k) {
@@ -38,7 +43,7 @@ to_key(int k) {
         return EKEY_PAGEDOWN;
     case KEY_PPAGE:
         return EKEY_PAGEUP;
-    default: printf("%d", k);
+    default:
         return k;
     }
 }

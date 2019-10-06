@@ -245,6 +245,7 @@ editor_main(int argc, char** argv) {
         }
     }
 
+    ui_cleanup(use_gui);
     return 0;
 }
 
